@@ -73,6 +73,58 @@ npm run dev
 
 The app will run at `http://127.0.0.1:5173`.
 
+## Deployment Environment Variables
+
+### Render Backend
+
+Use **Web Service** with root directory `backend`.
+
+```text
+Build Command: pip install -r requirements.txt
+Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+Health Check Path: /health
+```
+
+Environment variables:
+
+```text
+FRONTEND_ORIGINS=https://school-ai-campus-assistant.vercel.app
+DATABASE_URL=sqlite:///./enterprise_ai_agent.db
+```
+
+The deployed backend URL should look like:
+
+```text
+https://school-ai-campus-assistant.onrender.com
+```
+
+Test it with:
+
+```text
+https://school-ai-campus-assistant.onrender.com/health
+```
+
+### Vercel Frontend
+
+Use root directory `frontend`.
+
+```text
+Build Command: npm run build
+Output Directory: dist
+```
+
+Environment variable:
+
+```text
+VITE_API_BASE=https://school-ai-campus-assistant.onrender.com
+```
+
+The frontend URL should look like:
+
+```text
+https://school-ai-campus-assistant.vercel.app
+```
+
 ## Sample Questions
 
 - Aling lab supplies ang paubos na?

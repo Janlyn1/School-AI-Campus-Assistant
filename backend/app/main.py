@@ -61,6 +61,18 @@ def startup() -> None:
         db.close()
 
 
+@app.get("/")
+def api_home() -> dict:
+    return {
+        "name": "School AI Campus Assistant API",
+        "status": "ok",
+        "frontend": "https://school-ai-campus-assistant.vercel.app",
+        "health": "/health",
+        "docs": "/docs",
+        "chat": "/chat",
+    }
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
