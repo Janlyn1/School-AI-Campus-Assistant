@@ -240,7 +240,7 @@ function App() {
       const result = await response.json();
       setActiveResult(result);
     } catch {
-      setError("Backend is not responding. Start FastAPI on http://127.0.0.1:8000, then try again.");
+      setError("Backend API is not responding yet. Please wait a moment and try again.");
     } finally {
       setLoading(false);
     }
