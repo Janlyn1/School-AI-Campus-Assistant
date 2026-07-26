@@ -39,6 +39,7 @@ This portfolio project is built to demonstrate AI agent, backend API, database, 
 - Automated school report generation
 - Dashboard metrics and charts
 - Add School Data page for records, documents, forecast inputs, and AI notes
+- Chat-based inventory writing, for example: `add records lab supplies lma-302 rpi embedded system 9 stock 10 level engineering lab`
 - Clickable save notifications that open the newly added item and notes
 - Hide/show Indexed Documents panel
 - Visible agent workflow steps for each answer
@@ -142,6 +143,7 @@ https://school-ai-campus-assistant.vercel.app
 ## Sample Questions
 
 - Aling lab supplies ang paubos na?
+- Add records lab supplies lma-302 rpi embedded system 9 stock 10 level engineering lab
 - Which courses have the most student activity?
 - Show project scores greater than 85.
 - Show students with low performance.

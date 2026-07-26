@@ -267,6 +267,14 @@ function App() {
       }, 3);
       const result = await response.json();
       setActiveResult(result);
+      if (result.intent === "inventory_write_agent" && result.rows?.[0]) {
+        addNotification({
+          kind: "inventory",
+          title: result.answer,
+          item: result.rows[0],
+        });
+        refreshDashboardData();
+      }
     } catch {
       setError("AI backend is still waking up. Wait 30 seconds, then click Send again.");
     } finally {

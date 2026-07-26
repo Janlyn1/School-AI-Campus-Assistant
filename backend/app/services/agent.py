@@ -3,6 +3,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from ..models import InventoryItem, KnowledgeDocument
 from .analytics import (
     churn_risk_customers,
     dashboard_summary,
@@ -59,8 +60,116 @@ def _answer(text: str, english: str, tagalog: str) -> str:
     return tagalog if _is_tagalog(text) else english
 
 
+def _clean_phrase(value: str) -> str:
+    cleaned = re.sub(r"\s+", " ", value.replace("_", " ").replace("-", " ")).strip(" .,;:")
+    return cleaned.title() if cleaned else ""
+
+
+def _parse_inventory_add(message: str) -> dict[str, Any] | None:
+    text = message.lower()
+    add_terms = ["add", "insert", "save", "create", "dagdag", "magdagdag", "ilagay", "lagay"]
+    inventory_terms = ["record", "records", "lab supplies", "lab supply", "stock", "inventory", "supply"]
+    if not (_has_any(text, add_terms) and _has_any(text, inventory_terms)):
+        return None
+
+    sku_match = re.search(r"\b([a-z]{2,}[-_]?\d{2,})\b", message, flags=re.IGNORECASE)
+    stock_match = re.search(r"\b(\d+)\s*(?:stock|stocks|pcs|pieces|qty|quantity|remaining)\b", text)
+    reorder_match = re.search(r"\b(\d+)\s*(?:level|reorder\s*level|reorder)\b", text)
+    if not (sku_match and stock_match and reorder_match):
+        return None
+
+    product_segment = message[sku_match.end() : stock_match.start()]
+    product_segment = re.sub(r"\b(?:lab supplies?|inventory|record|records|item|product)\b", " ", product_segment, flags=re.IGNORECASE)
+    product = _clean_phrase(product_segment) or sku_match.group(1).upper()
+
+    supplier_segment = message[reorder_match.end() :]
+    supplier_segment = re.sub(r"\b(?:note|notes|example|sample)\b.*$", "", supplier_segment, flags=re.IGNORECASE)
+    supplier = _clean_phrase(supplier_segment) or "Engineering Lab"
+
+    category = "Embedded Systems" if "embedded" in text or "rpi" in text else "Lab Supplies"
+    note_match = re.search(r"\b(?:note|notes)\s+(.+)$", message, flags=re.IGNORECASE)
+    note = note_match.group(1).strip() if note_match else f"Added through AI chat command: {message}"
+
+    return {
+        "sku": sku_match.group(1).upper().replace("_", "-"),
+        "product": product,
+        "category": category,
+        "stock_remaining": int(stock_match.group(1)),
+        "reorder_level": int(reorder_match.group(1)),
+        "supplier": supplier,
+        "note": note,
+    }
+
+
+def _add_inventory_from_chat(db: Session, message: str) -> dict[str, Any] | None:
+    payload = _parse_inventory_add(message)
+    if not payload:
+        return None
+
+    item = db.query(InventoryItem).filter(InventoryItem.sku == payload["sku"]).first()
+    action = "updated"
+    if not item:
+        action = "added"
+        item = InventoryItem(
+            sku=payload["sku"],
+            product=payload["product"],
+            category=payload["category"],
+            stock_remaining=payload["stock_remaining"],
+            reorder_level=payload["reorder_level"],
+            supplier=payload["supplier"],
+        )
+        db.add(item)
+    else:
+        item.product = payload["product"]
+        item.category = payload["category"]
+        item.stock_remaining = payload["stock_remaining"]
+        item.reorder_level = payload["reorder_level"]
+        item.supplier = payload["supplier"]
+
+    db.add(
+        KnowledgeDocument(
+            title=f"Inventory note: {payload['product']}",
+            source_type="AI_NOTE",
+            content=payload["note"],
+        )
+    )
+    db.commit()
+    db.refresh(item)
+
+    row = {
+        "id": item.id,
+        "sku": item.sku,
+        "product": item.product,
+        "category": item.category,
+        "stock_remaining": item.stock_remaining,
+        "reorder_level": item.reorder_level,
+        "supplier": item.supplier,
+        "note": payload["note"],
+    }
+    return {
+        "intent": "inventory_write_agent",
+        "answer": (
+            f"Saved. {item.product} ({item.sku}) was {action} with {item.stock_remaining} stock, "
+            f"reorder level {item.reorder_level}, supplier {item.supplier}."
+        ),
+        "sql": "INSERT OR UPDATE inventory SET sku, product, category, stock_remaining, reorder_level, supplier",
+        "rows": [row],
+        "confidence": 0.91,
+        "workflow": [
+            "Classified as add inventory command",
+            "Extracted SKU, product, stock, reorder level, and supplier",
+            "Saved the lab supply record",
+            "Created an AI note for audit context",
+        ],
+    }
+
+
 def answer_question(db: Session, message: str) -> dict[str, Any]:
     text = message.lower()
+
+    inventory_write = _add_inventory_from_chat(db, message)
+    if inventory_write:
+        return inventory_write
 
     revenue_terms = [
         "total revenue",
