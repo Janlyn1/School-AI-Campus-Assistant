@@ -1,0 +1,6 @@
+name,segment,lifetime_value,churn_risk,region
+Acme Retail,Enterprise,128000,0.18,West
+BlueRiver Health,Enterprise,154000,0.11,East
+BrightCart,SMB,22000,0.62,West
+Cedar Finance,Mid Market,72000,0.27,Central
+Nova Foods,SMB,31000,0.54,South

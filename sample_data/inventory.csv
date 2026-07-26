@@ -1,0 +1,6 @@
+sku,product,category,stock_remaining,reorder_level,supplier
+A-100,Insight Dashboard Pro,Analytics,9,12,Northwind BI
+D-240,Data Quality Monitor,Data Ops,7,10,MetricWorks
+F-330,Forecast Studio,ML,18,8,ModelForge
+S-410,Support Copilot,AI,5,15,AgentStack
+P-150,Pipeline Auditor,Data Ops,11,10,MetricWorks

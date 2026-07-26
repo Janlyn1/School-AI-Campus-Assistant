@@ -1,0 +1,10 @@
+date,product,category,quantity,amount,customer_segment
+2026-01-12,Insight Dashboard Pro,Analytics,12,14400,Enterprise
+2026-02-18,Insight Dashboard Pro,Analytics,15,18000,Enterprise
+2026-03-20,Data Quality Monitor,Data Ops,20,13000,Mid Market
+2026-04-14,Data Quality Monitor,Data Ops,24,15600,Mid Market
+2026-05-06,Forecast Studio,ML,8,17600,Enterprise
+2026-06-09,Forecast Studio,ML,11,24200,Enterprise
+2026-06-22,Support Copilot,AI,19,17100,SMB
+2026-07-05,Support Copilot,AI,23,20700,SMB
+2026-07-12,Pipeline Auditor,Data Ops,10,12500,Enterprise
