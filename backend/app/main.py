@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
@@ -22,6 +23,19 @@ from .services.forecast import forecast_next_month
 from .services.seed import seed_database
 
 
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://school-ai-campus-assistant.vercel.app",
+]
+
+
+def allowed_origins() -> list[str]:
+    configured = os.getenv("FRONTEND_ORIGINS", "")
+    extra_origins = [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+    return [*DEFAULT_ALLOWED_ORIGINS, *extra_origins]
+
+
 app = FastAPI(
     title="School AI Campus Assistant",
     description="Agentic AI assistant for school records, document search, reports, and activity forecasting.",
@@ -30,7 +44,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
