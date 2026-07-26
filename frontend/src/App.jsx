@@ -31,6 +31,22 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://school-ai-campus-assistant.onrender.com";
 
+async function apiFetch(path, options = {}, retries = 2) {
+  try {
+    const response = await fetch(`${API_BASE}${path}`, options);
+    if (!response.ok) {
+      throw new Error(`API returned ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries <= 0) {
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return apiFetch(path, options, retries - 1);
+  }
+}
+
 const prompts = [
   "Aling lab supplies ang paubos na?",
   "Which courses have the most student activity?",
@@ -206,12 +222,12 @@ function App() {
   });
 
   async function refreshDashboardData() {
-    fetch(`${API_BASE}/dashboard/summary`)
+    apiFetch("/dashboard/summary")
       .then((response) => response.json())
       .then(setSummary)
       .catch(() => setSummary(null));
 
-    fetch(`${API_BASE}/documents`)
+    apiFetch("/documents")
       .then((response) => response.json())
       .then(setDocuments)
       .catch(() => setDocuments([]));
@@ -225,22 +241,25 @@ function App() {
     if (!nextMessage.trim()) return;
     setLoading(true);
     setError("");
+    setActiveResult({
+      answer: "Connecting to the school AI backend. If the Render service was asleep, this can take a few seconds.",
+      intent: "waking_backend",
+      confidence: 0.7,
+      workflow: ["Sending question", "Waking backend if needed", "Waiting for agent response"],
+    });
     setMessage(nextMessage);
     setShowPrompts(false);
 
     try {
-      const response = await fetch(`${API_BASE}/chat`, {
+      const response = await apiFetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: nextMessage }),
-      });
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
+      }, 3);
       const result = await response.json();
       setActiveResult(result);
     } catch {
-      setError("Backend API is not responding yet. Please wait a moment and try again.");
+      setError("AI backend is still waking up. Wait 30 seconds, then click Send again.");
     } finally {
       setLoading(false);
     }
@@ -308,15 +327,12 @@ function App() {
     })();
 
     try {
-      const response = await fetch(`${API_BASE}${config.endpoint}`, {
+      const response = await apiFetch(config.endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config.payload),
-      });
+      }, 3);
       const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.detail || "Unable to save data.");
-      }
 
       addNotification({
         title: result.message,
