@@ -246,6 +246,81 @@ header h2 {
   background: #3b6f91;
 }
 
+.portfolioStrip {
+  background: #ffffff;
+  border: 1px solid #ded8cd;
+  border-left: 4px solid #117865;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 18px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.portfolioIntro {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.portfolioIntro h3 {
+  font-size: 21px;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.portfolioIntro p {
+  color: #4a4742;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.techBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.techBadges span {
+  background: #f4f0e8;
+  border: 1px solid #ded8cd;
+  border-radius: 999px;
+  color: #34322e;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 9px;
+}
+
+.signalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.signalItem {
+  background: #fbfaf7;
+  border: 1px solid #ebe5dc;
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  min-height: 84px;
+  padding: 12px;
+}
+
+.signalItem strong {
+  color: #0f5f52;
+  font-size: 13px;
+}
+
+.signalItem span {
+  color: #4a4742;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .consoleGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -786,6 +861,7 @@ th {
   }
 
   .metricsGrid,
+  .portfolioStrip,
   .consoleGrid,
   .dataStudio {
     grid-template-columns: 1fr;
@@ -813,6 +889,7 @@ th {
 
   nav,
   .metricsGrid,
+  .signalGrid,
   .tabRow,
   .formGrid {
     grid-template-columns: 1fr;

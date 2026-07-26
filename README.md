@@ -1,12 +1,17 @@
-# School AI Campus Assistant
+# School AI Campus Assistant - Agentic Data Intelligence Demo
 
-An agentic AI assistant for a school or Computer Engineering department. It answers natural-language questions about student activity records, lab supplies, at-risk students, school documents, forecasts, and reports.
+An enterprise-style agentic AI assistant using a school and Computer Engineering campus dataset. It answers natural-language questions about structured records, lab supplies, at-risk students, school documents, forecasts, and reports.
 
-**Portfolio description:** A full-stack agentic AI chatbot built with React, FastAPI, SQLAlchemy, school record tools, document retrieval, forecasting, and an evidence-focused chat interface. The assistant routes each question to the right tool, shows workflow steps, displays record evidence, supports Tagalog/Taglish questions, and lets users add new school data with notifications.
+**Portfolio description:** A full-stack agentic AI chatbot built with React, FastAPI, SQLAlchemy, record-query tools, document retrieval, forecasting, and an evidence-focused chat interface. The assistant routes each question to the right tool, shows workflow steps, displays record evidence, supports Tagalog/Taglish questions, and lets users add new data with notifications.
+
+## Live Demo
+
+- Frontend: https://school-ai-campus-assistant.vercel.app
+- Backend health check: https://school-ai-campus-assistant.onrender.com/health
 
 ## Why This Project
 
-This portfolio project is built to demonstrate AI agent and chatbot skills using a context that is easier to explain as a Computer Engineering student:
+This portfolio project is built to demonstrate AI agent, backend API, database, retrieval, and ML workflow skills using a context that is easy to explain as a Computer Engineering student:
 
 - LLM-style agent workflows
 - FastAPI REST APIs
@@ -15,6 +20,15 @@ This portfolio project is built to demonstrate AI agent and chatbot skills using
 - Retrieval-Augmented Generation over school documents
 - Machine learning forecasting with scikit-learn
 - React dashboard and charts
+
+## Why It Matches the Junior AI/ML Engineer Role
+
+- Builds an interactive chatbot/agent experience
+- Connects the chat interface to structured database records
+- Retrieves evidence from unstructured school documents and notes
+- Integrates forecasting logic through a backend API
+- Shows model/tool outputs inside the workflow instead of hiding them
+- Documents the architecture, deployment, and project explanation
 
 ## Features
 

@@ -56,6 +56,15 @@ const prompts = [
   "Generate a school report.",
 ];
 
+const roleSignals = [
+  { label: "Agent routing", value: "Tool selection + workflow trace" },
+  { label: "Structured data", value: "SQL-style campus records" },
+  { label: "Document AI", value: "Policy/source retrieval" },
+  { label: "ML forecasting", value: "scikit-learn-ready forecast service" },
+];
+
+const techBadges = ["React", "FastAPI", "SQLAlchemy", "RAG-style search", "Forecast model", "Tagalog/English"];
+
 const formatMoney = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
 
@@ -435,8 +444,8 @@ function App() {
             <BrainCircuit size={24} />
           </div>
           <div>
-            <h1>School AI Agent</h1>
-            <p>Campus data assistant</p>
+            <h1>AI Data Agent</h1>
+            <p>Campus intelligence demo</p>
           </div>
         </div>
 
@@ -505,8 +514,8 @@ function App() {
       <section className="workspace">
         <header>
           <div>
-            <p className="eyebrow">school records + docs + forecasting</p>
-            <h2>Ask questions across campus data</h2>
+            <p className="eyebrow">agentic AI + records + documents + forecasting</p>
+            <h2>Campus data intelligence assistant</h2>
           </div>
           <div
             className="status"
@@ -559,6 +568,31 @@ function App() {
             accent="blue"
             onClick={() => openView("rag", "Which students are at risk?")}
           />
+        </section>
+
+        <section className="portfolioStrip" aria-label="Project role alignment">
+          <div className="portfolioIntro">
+            <p className="eyebrow">FocusKPI-ready portfolio project</p>
+            <h3>Enterprise-style AI workflow using a Computer Engineering campus dataset.</h3>
+            <p>
+              The demo keeps the data easy to explain while showing the same pattern used in business systems:
+              chat, API tools, record evidence, document sources, and forecasting.
+            </p>
+            <div className="techBadges">
+              {techBadges.map((badge) => (
+                <span key={badge}>{badge}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="signalGrid">
+            {roleSignals.map((signal) => (
+              <div className="signalItem" key={signal.label}>
+                <strong>{signal.label}</strong>
+                <span>{signal.value}</span>
+              </div>
+            ))}
+          </div>
         </section>
 
         {activeView === "add" && (
