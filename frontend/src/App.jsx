@@ -351,7 +351,7 @@ function RoleOverview({ role, summary, documents, adminMetrics, mlEvaluation, re
   return (
     <section className="roleOverview adminOverview">
       <div className="opsMetrics adminMetrics">
-        <article><span>Total users</span><strong>{summary?.total_students ?? 224}</strong><small>+8.2% this month</small></article>
+        <article><span>Synthetic student records</span><strong>{summary?.total_students ?? 0}</strong><small>Demo SQL dataset</small></article>
         <article><span>Logged AI requests</span><strong>{adminMetrics?.total_interactions ?? 0}</strong><small>Persisted interactions</small></article>
         <article><span>Measured latency</span><strong>{adminMetrics?.average_latency_ms ?? 0} ms</strong><small>Average backend routing time</small></article>
         <article><span>Feedback records</span><strong>{adminMetrics?.feedback_count ?? 0}</strong><small>{adminMetrics?.open_tickets ?? 0} escalated tickets</small></article>
