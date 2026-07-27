@@ -95,7 +95,7 @@ const landingFeatures = [
 const roleMeta = {
   Student: { eyebrow: "Student portal", title: "Good morning, Janlyn", subtitle: "Your classes, deadlines, campus updates, and AI support in one place." },
   Registrar: { eyebrow: "Registrar operations", title: "Knowledge and student support", subtitle: "Review questions, maintain policies, and resolve escalated requests." },
-  Admin: { eyebrow: "System administration", title: "CampusIQ control center", subtitle: "Monitor users, AI quality, data services, and system performance." },
+  Admin: { eyebrow: "System administration", title: "Ari Campus AI control center", subtitle: "Monitor users, AI quality, data services, and system performance." },
 };
 
 function LandingPage({ onDemo }) {
@@ -105,7 +105,7 @@ function LandingPage({ onDemo }) {
       <nav className="landingNav">
         <div className="brand">
           <div className="brandIcon"><BrainCircuit size={24} /></div>
-          <div><h1>CampusIQ</h1><p>Enterprise AI for higher education</p></div>
+          <div><h1>Ari Campus AI</h1><p>Enterprise AI for higher education</p></div>
         </div>
         <div className="landingLinks">
           <a href="#architecture">Architecture</a>
@@ -119,7 +119,7 @@ function LandingPage({ onDemo }) {
         <div className="heroCopy">
           <p className="eyebrow">Agentic AI + RAG + SQL + forecasting</p>
           <h1>One campus assistant.<br />The right agent for every question.</h1>
-          <p>CampusIQ connects students and staff to structured records, school policies, analytics, and specialized AI workflows with visible evidence.</p>
+          <p>Ari Campus AI connects students and staff to structured records, school policies, analytics, and specialized AI workflows with visible evidence.</p>
           <div className="heroActions">
             <select aria-label="Choose demo role" value={selectedRole} onChange={(event) => setSelectedRole(event.target.value)}>
               <option>Student</option><option>Registrar</option><option>Admin</option>
@@ -129,8 +129,8 @@ function LandingPage({ onDemo }) {
           </div>
           <div className="heroProof"><span><CheckCircle2 size={15} /> Live FastAPI backend</span><span><CheckCircle2 size={15} /> Evidence-first answers</span><span><CheckCircle2 size={15} /> Responsive role portals</span></div>
         </div>
-        <div className="heroProduct" aria-label="CampusIQ product preview">
-          <div className="previewTop"><span></span><span></span><span></span><strong>CampusIQ Agent Console</strong></div>
+        <div className="heroProduct" aria-label="Ari Campus AI product preview">
+          <div className="previewTop"><span></span><span></span><span></span><strong>Ari Agent Console</strong></div>
           <div className="previewBody">
             <div className="previewRail"><BrainCircuit size={20} /><Home size={17} /><FileSearch size={17} /><BarChart3 size={17} /></div>
             <div className="previewContent">
@@ -152,13 +152,13 @@ function LandingPage({ onDemo }) {
       </section>
 
       <section className="architectureSection" id="architecture">
-        <div><p className="eyebrow">System architecture</p><h2>From question to grounded answer</h2><p>The deployed portfolio uses React/Vite, FastAPI, SQLAlchemy, document retrieval, and scikit-learn. Production-ready extension points are documented for LLM orchestration, PostgreSQL, and pgvector.</p></div>
+        <div><p className="eyebrow">System architecture</p><h2>From question to grounded answer</h2><p>The deployed portfolio uses React/Vite, FastAPI, LangGraph, SQLAlchemy, TF-IDF document retrieval, and scikit-learn. PostgreSQL is supported through the backend database URL.</p></div>
         <div className="architectureFlow">
           {["Student or Staff", "React Frontend", "FastAPI Backend", "Agent Router", "SQL + RAG + ML", "Grounded Answer"].map((item, index) => <div key={item}><span>{index + 1}</span><strong>{item}</strong>{index < 5 && <ArrowRight size={16} />}</div>)}
         </div>
       </section>
 
-      <footer><strong>CampusIQ</strong><span>Designed and developed by Janlyn Rustila</span><button type="button" onClick={() => onDemo("Student")}>Launch demo</button></footer>
+      <footer><strong>Ari Campus AI</strong><span>Designed and developed by Janlyn Rustila</span><button type="button" onClick={() => onDemo("Student")}>Launch demo</button></footer>
     </div>
   );
 }
@@ -314,7 +314,7 @@ function RoleOverview({ role, summary, documents, adminMetrics, mlEvaluation, re
       <section className="roleOverview studentOverview">
         <div className="welcomeBand">
           <div><p className="eyebrow">Monday, July 27</p><h3>Your campus day at a glance</h3><p>You have one upcoming deadline and two new campus updates.</p></div>
-          <button type="button" onClick={() => onAsk("How do I enroll?")}><Sparkles size={17} /> Ask CampusIQ</button>
+          <button type="button" onClick={() => onAsk("How do I enroll?")}><Sparkles size={17} /> Ask Ari</button>
         </div>
         <div className="studentGrid">
           <article><div className="cardHeading"><CalendarDays size={18} /><strong>Upcoming</strong></div><h4>Capstone consultation</h4><p>Tomorrow, 10:00 AM · Engineering Lab</p><span className="softTag">1 day left</span></article>
@@ -747,7 +747,7 @@ function App() {
             <BrainCircuit size={24} />
           </div>
           <div>
-            <h1>CampusIQ</h1>
+            <h1>Ari Campus AI</h1>
             <p>Higher education AI</p>
           </div>
         </div>
@@ -908,7 +908,7 @@ function App() {
         {activeView !== "home" && activeView !== "requests" && demoRole !== "Student" && <section className="portfolioStrip" aria-label="Project role alignment">
           <div className="portfolioIntro">
             <p className="eyebrow">Agentic AI + RAG + knowledge management + analytics</p>
-            <h3>CampusIQ routes each request to a specialized data tool.</h3>
+            <h3>Ari routes each request through a LangGraph workflow to a specialized data tool.</h3>
             <p>
               The demo keeps the data easy to explain while showing the same pattern used in business systems:
               chat, API tools, record evidence, document sources, and forecasting.

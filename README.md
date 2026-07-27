@@ -1,4 +1,4 @@
-# CampusIQ - Enterprise AI Assistant for Higher Education
+# Ari Campus AI - Agentic Assistant for Higher Education
 
 An enterprise-style agentic AI assistant using a school and Computer Engineering campus dataset. It routes natural-language requests across structured records, lab inventory, knowledge documents, forecasting, and report tools.
 
@@ -14,6 +14,7 @@ An enterprise-style agentic AI assistant using a school and Computer Engineering
 This portfolio project is built to demonstrate AI agent, backend API, database, retrieval, and ML workflow skills using a context that is easy to explain as a Computer Engineering student:
 
 - LLM-style agent workflows
+- LangGraph orchestration
 - FastAPI REST APIs
 - SQL databases and generated record evidence
 - School/campus data workflows
@@ -73,20 +74,22 @@ React + Vite frontend
         |
 FastAPI backend
         |
-Campus router and specialized tool services
+LangGraph workflow
+        |
+ML intent classifier and specialized tool services
         |
 Gemini grounded response generation (when configured)
         |
 SQLAlchemy database layer
         |
-SQLite demo database or PostgreSQL via DATABASE_URL
+SQLite local fallback or PostgreSQL via DATABASE_URL
         |
 School document search + scikit-learn forecast model
 ```
 
 ## Multi-Agent Routing
 
-CampusIQ exposes a clear agent identity for every response:
+Ari Campus AI exposes a clear agent identity for every response:
 
 - **Records Agent** for SQLAlchemy-backed school and inventory records
 - **Knowledge Agent** for retrieved school document evidence
@@ -94,11 +97,11 @@ CampusIQ exposes a clear agent identity for every response:
 - **Report Agent** for combined records, retrieval, and forecast workflows
 - **Campus Router** for general capability guidance
 
-Routing and tool execution remain deterministic for reliability. When `GEMINI_API_KEY` is configured, Google Gemini converts the verified tool result into a natural English, Filipino, or Taglish answer. Gemini cannot approve requests, modify inventory directly, or invent SQL/RAG evidence.
+LangGraph runs the classifier and campus-tool nodes for every chat request. Tool execution remains deterministic for reliability. When `GEMINI_API_KEY` is configured, Google Gemini converts the verified tool result into a natural English, Filipino, or Taglish answer. Gemini cannot approve requests, modify inventory directly, or invent SQL/RAG evidence.
 
 ## Machine Learning Model
 
-CampusIQ includes a real student inquiry classification model, not a decorative metric:
+Ari Campus AI includes a real student inquiry classification model, not a decorative metric:
 
 - **Task:** multi-class intent classification
 - **Classes:** Finance, Guidance, IT Support, Laboratory, Library, Registrar, Scholarship
@@ -123,7 +126,7 @@ RAG answers show qualitative retrieval relevance alongside document type, filena
 
 ## Honest Demo Scope
 
-The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, PostgreSQL/pgvector, and server-side permission enforcement. LangGraph remains an optional orchestration extension rather than a fake dependency.
+The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, pgvector embeddings, and server-side permission enforcement. LangGraph is used for the deployed chat workflow. Document retrieval currently uses TF-IDF cosine similarity, not vector embeddings.
 
 The demo uses synthetic campus records only. SQL operations go through predefined SQLAlchemy tools, and student-facing navigation does not expose raw administrative data. Uploads are limited to 5 MB and validated to TXT, PDF, DOCX, or PPTX before text extraction.
 
@@ -151,6 +154,16 @@ npm run dev
 
 The app will run at `http://127.0.0.1:5173`.
 
+### Docker Compose
+
+Docker Compose starts the frontend, backend, and PostgreSQL together:
+
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:5173`. The backend health endpoint at `http://localhost:8000/health` reports the active database backend and orchestration engine.
+
 ## Deployment Environment Variables
 
 ### Render Backend
@@ -167,12 +180,12 @@ Environment variables:
 
 ```text
 FRONTEND_ORIGINS=https://school-ai-campus-assistant.vercel.app
-DATABASE_URL=sqlite:///./enterprise_ai_agent.db
+DATABASE_URL=postgresql://user:password@host:5432/database
 GEMINI_API_KEY=your-secret-key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-Store `GEMINI_API_KEY` only in Render's Environment settings. Never prefix it with `VITE_`, place it in the frontend, or commit it to GitHub. If Gemini is unavailable, CampusIQ returns the verified SQL/RAG/tool answer and labels the provider as `Tool-grounded fallback`.
+Store `GEMINI_API_KEY` only in Render's Environment settings. Never prefix it with `VITE_`, place it in the frontend, or commit it to GitHub. If Gemini is unavailable, Ari returns the verified SQL/RAG/tool answer and labels the provider as `Tool-grounded fallback`.
 
 The deployed backend URL should look like:
 

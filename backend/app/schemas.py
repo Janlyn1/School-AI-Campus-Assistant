@@ -19,7 +19,7 @@ class ChatResponse(BaseModel):
     confidence: float = 0.86
     workflow: list[str] = []
     report_markdown: str | None = None
-    agent_name: str = "CampusIQ Agent"
+    agent_name: str = "Ari Campus AI Agent"
     data_path: str = "Campus database"
     response_time_ms: int = 0
     model_trace: dict[str, Any] | None = None

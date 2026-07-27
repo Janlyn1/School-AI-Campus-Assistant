@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .database import Base, engine, get_db
+from .database import Base, database_backend, engine, get_db
 from .models import AgentFeedback, AgentInteraction, CampusRequest, InventoryItem, KnowledgeDocument, Sale
 from .schemas import (
     ChatRequest,
@@ -23,12 +23,12 @@ from .schemas import (
     SaleCreate,
     UploadResponse,
 )
-from .services.agent import answer_question
 from .services.analytics import dashboard_summary
 from .services.forecast import forecast_next_month
 from .services.gemini import generate_grounded_answer
 from .services.intent_classifier import classifier_evaluation, classify_inquiry
 from .services.seed import ensure_specialized_knowledge, seed_database
+from .services.workflow import run_agent_workflow
 
 
 DEFAULT_ALLOWED_ORIGINS = [
@@ -45,7 +45,7 @@ def allowed_origins() -> list[str]:
 
 
 app = FastAPI(
-    title="School AI Campus Assistant",
+    title="Ari Campus AI",
     description="Agentic AI assistant for school records, document search, reports, and activity forecasting.",
     version="1.0.0",
 )
@@ -73,7 +73,7 @@ def startup() -> None:
 @app.get("/")
 def api_home() -> dict:
     return {
-        "name": "School AI Campus Assistant API",
+        "name": "Ari Campus AI API",
         "status": "ok",
         "frontend": "https://school-ai-campus-assistant.vercel.app",
         "health": "/health",
@@ -88,6 +88,8 @@ def health() -> dict:
         "status": "ok",
         "gemini_configured": bool(os.getenv("GEMINI_API_KEY", "").strip()),
         "gemini_model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "database": database_backend(),
+        "orchestration": "LangGraph",
     }
 
 
@@ -104,7 +106,7 @@ def get_sales_forecast(db: Session = Depends(get_db)) -> dict:
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     started = time.perf_counter()
-    result = answer_question(db, request.message, role=request.role, student_name=request.student_name)
+    result = run_agent_workflow(db, request.message, role=request.role, student_name=request.student_name)
     intent = result.get("intent", "")
     domain_agents = {
         "enrollment_request_agent": ("Ari · Enrollment Assistant", "Student request → Registrar approval queue"),
@@ -135,7 +137,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     result["llm_model"] = generated["model"]
     result["llm_status"] = generated["status"]
     result["response_time_ms"] = round((time.perf_counter() - started) * 1000)
-    result["model_trace"] = classify_inquiry(request.message)
+    result.setdefault("model_trace", classify_inquiry(request.message))
     db.add(
         AgentInteraction(
             question=request.message,
