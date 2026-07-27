@@ -17,6 +17,9 @@ class ChatResponse(BaseModel):
     confidence: float = 0.86
     workflow: list[str] = []
     report_markdown: str | None = None
+    agent_name: str = "CampusIQ Agent"
+    data_path: str = "Campus database"
+    response_time_ms: int = 0
 
 
 class UploadResponse(BaseModel):
@@ -62,3 +65,12 @@ class DataCreateResponse(BaseModel):
     kind: str
     message: str
     item: dict[str, Any]
+
+
+class FeedbackCreate(BaseModel):
+    question: str
+    answer: str
+    intent: str
+    helpful: bool | None = None
+    escalated: bool = False
+    note: str | None = None

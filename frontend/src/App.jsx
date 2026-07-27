@@ -9,11 +9,15 @@ import {
   FileSearch,
   LineChart as LineChartIcon,
   MessageCircle,
+  MessageSquareWarning,
   PlusCircle,
   Send,
   ShieldCheck,
   Sparkles,
   StickyNote,
+  ThumbsDown,
+  ThumbsUp,
+  Users,
   Upload,
   X,
 } from "lucide-react";
@@ -63,7 +67,7 @@ const roleSignals = [
   { label: "ML forecasting", value: "scikit-learn-ready forecast service" },
 ];
 
-const techBadges = ["React", "FastAPI", "SQLAlchemy", "RAG-style search", "Forecast model", "Tagalog/English"];
+const techBadges = ["React", "FastAPI", "SQLAlchemy", "RAG retrieval", "scikit-learn", "Tagalog/English"];
 
 const formatMoney = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
@@ -194,6 +198,9 @@ function App() {
   const [addStatus, setAddStatus] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [demoRole, setDemoRole] = useState("Student");
+  const [feedbackStatus, setFeedbackStatus] = useState("");
+  const [lastQuestion, setLastQuestion] = useState("");
   const [inventoryForm, setInventoryForm] = useState({
     sku: "N-500",
     product: "Arduino Uno Kit",
@@ -257,7 +264,9 @@ function App() {
       workflow: ["Sending question", "Waking backend if needed", "Waiting for agent response"],
     });
     setMessage(nextMessage);
+    setLastQuestion(nextMessage);
     setShowPrompts(false);
+    setFeedbackStatus("");
 
     try {
       const response = await apiFetch("/chat", {
@@ -279,6 +288,30 @@ function App() {
       setError("AI backend is still waking up. Wait 30 seconds, then click Send again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sendFeedback(helpful, escalated = false) {
+    if (!activeResult) return;
+    setFeedbackStatus(escalated ? "Creating ticket..." : "Saving feedback...");
+    try {
+      const response = await apiFetch("/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: lastQuestion || message,
+          answer: activeResult.answer,
+          intent: activeResult.intent,
+          helpful,
+          escalated,
+          note: escalated ? `Escalated by ${demoRole} demo role` : null,
+        }),
+      });
+      const result = await response.json();
+      setFeedbackStatus(result.message);
+      if (escalated) addNotification({ kind: "ticket", title: result.message, item: result.item });
+    } catch {
+      setFeedbackStatus("Unable to save feedback while the backend is waking.");
     }
   }
 
@@ -452,8 +485,8 @@ function App() {
             <BrainCircuit size={24} />
           </div>
           <div>
-            <h1>AI Data Agent</h1>
-            <p>Campus intelligence demo</p>
+            <h1>CampusIQ</h1>
+            <p>Higher education AI</p>
           </div>
         </div>
 
@@ -523,8 +556,18 @@ function App() {
         <header>
           <div>
             <p className="eyebrow">agentic AI + records + documents + forecasting</p>
-            <h2>Campus data intelligence assistant</h2>
+            <h2>Enterprise AI assistant for higher education</h2>
           </div>
+          <div className="headerActions">
+            <label className="roleSwitcher">
+              <Users size={15} />
+              <span>Demo role</span>
+              <select value={demoRole} onChange={(event) => setDemoRole(event.target.value)}>
+                <option>Student</option>
+                <option>Registrar</option>
+                <option>Admin</option>
+              </select>
+            </label>
           <div
             className="status"
             role="button"
@@ -544,6 +587,7 @@ function App() {
           >
             <Activity size={15} />
             Live demo
+          </div>
           </div>
         </header>
 
@@ -580,8 +624,8 @@ function App() {
 
         <section className="portfolioStrip" aria-label="Project role alignment">
           <div className="portfolioIntro">
-            <p className="eyebrow">FocusKPI-ready portfolio project</p>
-            <h3>Enterprise-style AI workflow using a Computer Engineering campus dataset.</h3>
+            <p className="eyebrow">Agentic AI + RAG + knowledge management + analytics</p>
+            <h3>CampusIQ routes each request to a specialized data tool.</h3>
             <p>
               The demo keeps the data easy to explain while showing the same pattern used in business systems:
               chat, API tools, record evidence, document sources, and forecasting.
@@ -713,6 +757,13 @@ function App() {
                 </div>
                 <p className="answer">{activeResult.answer}</p>
 
+                <div className="explainGrid" aria-label="AI explainability">
+                  <div><span>Agent</span><strong>{activeResult.agent_name || "Campus Router"}</strong></div>
+                  <div><span>Data path</span><strong>{activeResult.data_path || "Campus tools"}</strong></div>
+                  <div><span>Role context</span><strong>{demoRole}</strong></div>
+                  <div><span>Response time</span><strong>{activeResult.response_time_ms ?? 0} ms</strong></div>
+                </div>
+
                 {!!activeResult.workflow?.length && (
                   <div className="workflow">
                     <div className="sectionTitle">
@@ -757,6 +808,16 @@ function App() {
                     ))}
                   </div>
                 )}
+
+                <div className="feedbackBar">
+                  <span>Was this answer useful?</span>
+                  <button type="button" onClick={() => sendFeedback(true)} title="Helpful"><ThumbsUp size={16} /></button>
+                  <button type="button" onClick={() => sendFeedback(false)} title="Not helpful"><ThumbsDown size={16} /></button>
+                  <button className="ticketButton" type="button" onClick={() => sendFeedback(false, true)}>
+                    <MessageSquareWarning size={16} /> Create ticket
+                  </button>
+                  {feedbackStatus && <small>{feedbackStatus}</small>}
+                </div>
               </>
             ) : (
               <div className="empty">

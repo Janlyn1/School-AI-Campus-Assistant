@@ -1,18 +1,21 @@
 import os
+import time
 from datetime import date
+from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .database import Base, engine, get_db
-from .models import InventoryItem, KnowledgeDocument, Sale
+from .models import AgentFeedback, InventoryItem, KnowledgeDocument, Sale
 from .schemas import (
     ChatRequest,
     ChatResponse,
     DataCreateResponse,
     DocumentCreate,
     ForecastPointCreate,
+    FeedbackCreate,
     InventoryCreate,
     SaleCreate,
     UploadResponse,
@@ -90,7 +93,51 @@ def get_sales_forecast(db: Session = Depends(get_db)) -> dict:
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
-    return answer_question(db, request.message)
+    started = time.perf_counter()
+    result = answer_question(db, request.message)
+    intent = result.get("intent", "")
+    if "inventory" in intent or "sql" in intent:
+        agent_name, data_path = "Records Agent", "SQLAlchemy structured records"
+    elif "forecast" in intent:
+        agent_name, data_path = "Forecast Agent", "scikit-learn forecast service"
+    elif "rag" in intent:
+        agent_name, data_path = "Knowledge Agent", "RAG document retrieval"
+    elif "report" in intent:
+        agent_name, data_path = "Report Agent", "Records + RAG + forecast tools"
+    else:
+        agent_name, data_path = "Campus Router", "Intent router + campus tools"
+    result["agent_name"] = agent_name
+    result["data_path"] = data_path
+    result["response_time_ms"] = round((time.perf_counter() - started) * 1000)
+    return result
+
+
+@app.post("/feedback", response_model=DataCreateResponse)
+def create_feedback(request: FeedbackCreate, db: Session = Depends(get_db)) -> dict:
+    feedback = AgentFeedback(
+        question=request.question,
+        answer=request.answer,
+        intent=request.intent,
+        helpful=request.helpful,
+        escalated=request.escalated,
+        note=request.note,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+    message = "Support ticket created for registrar review." if feedback.escalated else "Feedback saved. Thank you."
+    return {
+        "kind": "ticket" if feedback.escalated else "feedback",
+        "message": message,
+        "item": {
+            "id": feedback.id,
+            "intent": feedback.intent,
+            "helpful": feedback.helpful,
+            "escalated": feedback.escalated,
+            "status": "pending" if feedback.escalated else "reviewed",
+        },
+    }
 
 
 @app.post("/data/inventory", response_model=DataCreateResponse)

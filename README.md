@@ -1,6 +1,6 @@
-# School AI Campus Assistant - Agentic Data Intelligence Demo
+# CampusIQ - Enterprise AI Assistant for Higher Education
 
-An enterprise-style agentic AI assistant using a school and Computer Engineering campus dataset. It answers natural-language questions about structured records, lab supplies, at-risk students, school documents, forecasts, and reports.
+An enterprise-style agentic AI assistant using a school and Computer Engineering campus dataset. It routes natural-language requests across structured records, lab inventory, knowledge documents, forecasting, and report tools.
 
 **Portfolio description:** A full-stack agentic AI chatbot built with React, FastAPI, SQLAlchemy, record-query tools, document retrieval, forecasting, and an evidence-focused chat interface. The assistant routes each question to the right tool, shows workflow steps, displays record evidence, supports Tagalog/Taglish questions, and lets users add new data with notifications.
 
@@ -43,7 +43,11 @@ This portfolio project is built to demonstrate AI agent, backend API, database, 
 - Clickable save notifications that open the newly added item and notes
 - Hide/show Indexed Documents panel
 - Visible agent workflow steps for each answer
-- Confidence/evidence indicators
+- Explainability panel with selected agent, data path, role context, confidence, and response time
+- Demo role switcher for Student, Registrar, and Admin perspectives
+- Helpful/not-helpful feedback persisted through the backend
+- Ticket escalation for answers that need registrar review
+- Confidence, SQL, row, and retrieved-source evidence
 - Downloadable AI school report
 - Tagalog/Taglish-aware routing for core school questions
 - Cleaner chat widget with on-demand recommended questions and no visible chat history
@@ -55,7 +59,7 @@ React + Vite frontend
         |
 FastAPI backend
         |
-Agent router and tool services
+Campus router and specialized tool services
         |
 SQLAlchemy database layer
         |
@@ -63,6 +67,22 @@ SQLite demo database or PostgreSQL via DATABASE_URL
         |
 School document search + scikit-learn forecast model
 ```
+
+## Multi-Agent Routing
+
+CampusIQ exposes a clear agent identity for every response:
+
+- **Records Agent** for SQLAlchemy-backed school and inventory records
+- **Knowledge Agent** for retrieved school document evidence
+- **Forecast Agent** for time-series prediction
+- **Report Agent** for combined records, retrieval, and forecast workflows
+- **Campus Router** for general capability guidance
+
+The public demo uses deterministic intent routing so it remains reliable without requiring a paid API key. The service boundaries are ready for an LLM or LangGraph router as a future production integration.
+
+## Honest Demo Scope
+
+The Student, Registrar, and Admin selector demonstrates role context in the explainability and escalation workflow; it is not production authentication. Production deployment would add JWT or an identity provider, PostgreSQL/pgvector, document page extraction, and permission enforcement.
 
 ## Run Locally
 

@@ -1,4 +1,6 @@
-from sqlalchemy import Date, Float, Integer, String, Text
+from datetime import datetime
+
+from sqlalchemy import Boolean, Date, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -57,3 +59,16 @@ class KnowledgeDocument(Base):
     title: Mapped[str] = mapped_column(String(160), index=True)
     source_type: Mapped[str] = mapped_column(String(40))
     content: Mapped[str] = mapped_column(Text)
+
+
+class AgentFeedback(Base):
+    __tablename__ = "agent_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+    intent: Mapped[str] = mapped_column(String(80), index=True)
+    helpful: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    escalated: Mapped[bool] = mapped_column(Boolean, default=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
