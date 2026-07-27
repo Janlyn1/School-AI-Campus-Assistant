@@ -23,7 +23,7 @@ from .schemas import (
 from .services.agent import answer_question
 from .services.analytics import dashboard_summary
 from .services.forecast import forecast_next_month
-from .services.seed import seed_database
+from .services.seed import ensure_specialized_knowledge, seed_database
 
 
 DEFAULT_ALLOWED_ORIGINS = [
@@ -60,6 +60,7 @@ def startup() -> None:
     db = next(get_db())
     try:
         seed_database(db)
+        ensure_specialized_knowledge(db)
     finally:
         db.close()
 
@@ -96,7 +97,16 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     started = time.perf_counter()
     result = answer_question(db, request.message)
     intent = result.get("intent", "")
-    if "inventory" in intent or "sql" in intent:
+    domain_agents = {
+        "registrar_domain_agent": ("Registrar Agent", "Enrollment and registrar knowledge"),
+        "finance_domain_agent": ("Finance Agent", "Scholarship and finance knowledge"),
+        "guidance_domain_agent": ("Guidance Agent", "Student support knowledge"),
+        "library_domain_agent": ("Library Agent", "Library services knowledge"),
+        "it_domain_agent": ("IT Agent", "Campus technology knowledge"),
+    }
+    if intent in domain_agents:
+        agent_name, data_path = domain_agents[intent]
+    elif "inventory" in intent or "sql" in intent:
         agent_name, data_path = "Records Agent", "SQLAlchemy structured records"
     elif "forecast" in intent:
         agent_name, data_path = "Forecast Agent", "scikit-learn forecast service"

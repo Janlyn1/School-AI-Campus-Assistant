@@ -1,17 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  ArrowRight,
   BarChart3,
   Bell,
+  BookOpen,
   BrainCircuit,
+  CalendarDays,
+  CheckCircle2,
+  CircleHelp,
+  Clock3,
   Database,
   Download,
+  ExternalLink,
   FileSearch,
+  GraduationCap,
+  Home,
   LineChart as LineChartIcon,
+  LockKeyhole,
   MessageCircle,
   MessageSquareWarning,
+  MonitorCog,
   PlusCircle,
+  School,
+  Search,
   Send,
+  Settings,
   ShieldCheck,
   Sparkles,
   StickyNote,
@@ -19,6 +33,7 @@ import {
   ThumbsUp,
   Users,
   Upload,
+  UserRound,
   X,
 } from "lucide-react";
 import {
@@ -51,14 +66,11 @@ async function apiFetch(path, options = {}, retries = 2) {
   }
 }
 
-const prompts = [
-  "Aling lab supplies ang paubos na?",
-  "Which courses have the most student activity?",
-  "Show project scores greater than 85.",
-  "Show students with low performance.",
-  "Predict next month's enrollment activity.",
-  "Generate a school report.",
-];
+const promptsByRole = {
+  Student: ["How do I enroll?", "What scholarships are available?", "What are the graduation requirements?", "What are the library hours?", "How can I reset my campus WiFi password?", "Explain the capstone policy."],
+  Registrar: ["Show students with low performance.", "Which students are at risk?", "What policy sources are indexed?", "Show student activity records.", "Generate a school report.", "Which questions need registrar review?"],
+  Admin: ["Generate a school report.", "Predict next month's enrollment activity.", "Aling lab supplies ang paubos na?", "Show project scores greater than 85.", "How many students are tracked?", "Show system AI performance."],
+};
 
 const roleSignals = [
   { label: "Agent routing", value: "Tool selection + workflow trace" },
@@ -68,6 +80,86 @@ const roleSignals = [
 ];
 
 const techBadges = ["React", "FastAPI", "SQLAlchemy", "RAG retrieval", "scikit-learn", "Tagalog/English"];
+
+const landingFeatures = [
+  [MessageCircle, "AI Assistant", "Natural-language help in English, Filipino, and Taglish."],
+  [FileSearch, "RAG Document Search", "Retrieved policy evidence with source and confidence."],
+  [Database, "SQL Database", "Structured campus records and visible query evidence."],
+  [BrainCircuit, "Multi-Agent", "Specialized Registrar, Finance, Guidance, Library, and IT agents."],
+  [BarChart3, "Analytics Dashboard", "Operational metrics, forecasts, latency, and feedback."],
+  [LockKeyhole, "Role-Based Experience", "Distinct student, registrar, and admin workspaces."],
+];
+
+const roleMeta = {
+  Student: { eyebrow: "Student portal", title: "Good morning, Janlyn", subtitle: "Your classes, deadlines, campus updates, and AI support in one place." },
+  Registrar: { eyebrow: "Registrar operations", title: "Knowledge and student support", subtitle: "Review questions, maintain policies, and resolve escalated requests." },
+  Admin: { eyebrow: "System administration", title: "CampusIQ control center", subtitle: "Monitor users, AI quality, data services, and system performance." },
+};
+
+function LandingPage({ onDemo }) {
+  const [selectedRole, setSelectedRole] = useState("Student");
+  return (
+    <div className="landing">
+      <nav className="landingNav">
+        <div className="brand">
+          <div className="brandIcon"><BrainCircuit size={24} /></div>
+          <div><h1>CampusIQ</h1><p>Enterprise AI for higher education</p></div>
+        </div>
+        <div className="landingLinks">
+          <a href="#architecture">Architecture</a>
+          <a href="https://github.com/Janlyn1/School-AI-Campus-Assistant#readme" target="_blank" rel="noreferrer">Documentation</a>
+          <a href="https://github.com/Janlyn1/School-AI-Campus-Assistant" target="_blank" rel="noreferrer">GitHub</a>
+          <button type="button" onClick={() => onDemo(selectedRole)}>Try demo <ArrowRight size={16} /></button>
+        </div>
+      </nav>
+
+      <section className="landingHero">
+        <div className="heroCopy">
+          <p className="eyebrow">Agentic AI + RAG + SQL + forecasting</p>
+          <h1>One campus assistant.<br />The right agent for every question.</h1>
+          <p>CampusIQ connects students and staff to structured records, school policies, analytics, and specialized AI workflows with visible evidence.</p>
+          <div className="heroActions">
+            <select aria-label="Choose demo role" value={selectedRole} onChange={(event) => setSelectedRole(event.target.value)}>
+              <option>Student</option><option>Registrar</option><option>Admin</option>
+            </select>
+            <button type="button" className="heroPrimary" onClick={() => onDemo(selectedRole)}>Open {selectedRole} demo <ArrowRight size={17} /></button>
+            <a href="https://github.com/Janlyn1/School-AI-Campus-Assistant" target="_blank" rel="noreferrer">View source <ExternalLink size={15} /></a>
+          </div>
+          <div className="heroProof"><span><CheckCircle2 size={15} /> Live FastAPI backend</span><span><CheckCircle2 size={15} /> Evidence-first answers</span><span><CheckCircle2 size={15} /> Responsive role portals</span></div>
+        </div>
+        <div className="heroProduct" aria-label="CampusIQ product preview">
+          <div className="previewTop"><span></span><span></span><span></span><strong>CampusIQ Agent Console</strong></div>
+          <div className="previewBody">
+            <div className="previewRail"><BrainCircuit size={20} /><Home size={17} /><FileSearch size={17} /><BarChart3 size={17} /></div>
+            <div className="previewContent">
+              <p>Question routed successfully</p>
+              <h3>Registrar Agent</h3>
+              <div className="previewAnswer">Students with academic risk above 50% should receive an adviser review within seven days.</div>
+              <div className="previewEvidence"><span>Source</span><strong>Student Support Playbook</strong><span>Confidence</span><strong>94%</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="landingSection">
+        <p className="eyebrow">Platform capabilities</p>
+        <h2>Built for real campus workflows</h2>
+        <div className="featureGrid">
+          {landingFeatures.map(([Icon, title, description]) => <article key={title}><Icon size={21} /><h3>{title}</h3><p>{description}</p></article>)}
+        </div>
+      </section>
+
+      <section className="architectureSection" id="architecture">
+        <div><p className="eyebrow">System architecture</p><h2>From question to grounded answer</h2><p>The deployed portfolio uses React/Vite, FastAPI, SQLAlchemy, document retrieval, and scikit-learn. Production-ready extension points are documented for LLM orchestration, PostgreSQL, and pgvector.</p></div>
+        <div className="architectureFlow">
+          {["Student or Staff", "React Frontend", "FastAPI Backend", "Agent Router", "SQL + RAG + ML", "Grounded Answer"].map((item, index) => <div key={item}><span>{index + 1}</span><strong>{item}</strong>{index < 5 && <ArrowRight size={16} />}</div>)}
+        </div>
+      </section>
+
+      <footer><strong>CampusIQ</strong><span>Designed and developed by Janlyn Rustila</span><button type="button" onClick={() => onDemo("Student")}>Launch demo</button></footer>
+    </div>
+  );
+}
 
 const formatMoney = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
@@ -182,7 +274,66 @@ function downloadReport(markdown) {
   URL.revokeObjectURL(url);
 }
 
+function RoleOverview({ role, summary, onAsk, onNavigate }) {
+  if (role === "Student") {
+    return (
+      <section className="roleOverview studentOverview">
+        <div className="welcomeBand">
+          <div><p className="eyebrow">Monday, July 27</p><h3>Your campus day at a glance</h3><p>You have one upcoming deadline and two new campus updates.</p></div>
+          <button type="button" onClick={() => onAsk("How do I enroll?")}><Sparkles size={17} /> Ask CampusIQ</button>
+        </div>
+        <div className="studentGrid">
+          <article><div className="cardHeading"><CalendarDays size={18} /><strong>Upcoming</strong></div><h4>Capstone consultation</h4><p>Tomorrow, 10:00 AM · Engineering Lab</p><span className="softTag">1 day left</span></article>
+          <article><div className="cardHeading"><Bell size={18} /><strong>Announcements</strong></div><h4>Enrollment schedule posted</h4><p>Online registration opens August 3 for continuing students.</p><button type="button" onClick={() => onAsk("How do I enroll?")}>View details</button></article>
+          <article><div className="cardHeading"><GraduationCap size={18} /><strong>My program</strong></div><h4>BS Computer Engineering</h4><p>4th Year · 18 units this term</p><button type="button" onClick={() => onAsk("What are the graduation requirements?")}>Check requirements</button></article>
+        </div>
+        <div className="quickServices">
+          <strong>Quick services</strong>
+          {[["Enrollment", School, "How do I enroll?"], ["Scholarships", GraduationCap, "What scholarships are available?"], ["Library", BookOpen, "What are the library hours?"], ["Campus IT", MonitorCog, "How can I reset my campus WiFi password?"]].map(([label, Icon, question]) => <button type="button" key={label} onClick={() => onAsk(question)}><Icon size={19} /><span>{label}</span><ArrowRight size={15} /></button>)}
+        </div>
+      </section>
+    );
+  }
+
+  if (role === "Registrar") {
+    return (
+      <section className="roleOverview registrarOverview">
+        <div className="opsMetrics">
+          <article><span>Open tickets</span><strong>6</strong><small>2 high priority</small></article>
+          <article><span>Pending questions</span><strong>14</strong><small>4 low confidence</small></article>
+          <article><span>Knowledge documents</span><strong>{summary?.document_count ?? 3}</strong><small>Indexed and searchable</small></article>
+          <article><span>Average confidence</span><strong>91%</strong><small>Last 30 days</small></article>
+        </div>
+        <div className="operationsGrid">
+          <article className="queuePanel"><div className="panelTitle"><div><h3>Student question queue</h3><p>Requests that need human review</p></div><button type="button" onClick={() => onNavigate("rag")}>View knowledge</button></div>
+            {[["Transcript request follow-up", "Maria D.", "High"], ["Enrollment prerequisite question", "Kyle R.", "Medium"], ["Scholarship document verification", "Ana P.", "Medium"]].map(([title, user, priority]) => <button type="button" className="queueRow" key={title} onClick={() => onAsk(title)}><span><strong>{title}</strong><small>{user} · 8 min ago</small></span><em className={`priority ${priority.toLowerCase()}`}>{priority}</em><ArrowRight size={15} /></button>)}
+          </article>
+          <article className="knowledgeHealth"><h3>Knowledge health</h3><p>Coverage across registrar content</p><div className="healthScore"><strong>88</strong><span>/100</span></div><div className="progressTrack"><span style={{ width: "88%" }} /></div><ul><li><CheckCircle2 size={15} /> Student handbook indexed</li><li><CheckCircle2 size={15} /> Policies searchable</li><li><CircleHelp size={15} /> 4 FAQs need answers</li></ul><button type="button" onClick={() => onNavigate("add")}>Add school document</button></article>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="roleOverview adminOverview">
+      <div className="opsMetrics adminMetrics">
+        <article><span>Total users</span><strong>{summary?.total_students ?? 224}</strong><small>+8.2% this month</small></article>
+        <article><span>AI requests</span><strong>1,284</strong><small>96.4% success rate</small></article>
+        <article><span>Average latency</span><strong>842 ms</strong><small>Within target</small></article>
+        <article><span>Open feedback</span><strong>9</strong><small>3 need review</small></article>
+      </div>
+      <div className="adminGrid">
+        <article className="systemChart"><div className="panelTitle"><div><h3>AI request volume</h3><p>Requests across campus departments</p></div><span className="onlineTag">All systems operational</span></div>
+          <ResponsiveContainer width="100%" height={220}><LineChart data={[{d:"Mon",v:142},{d:"Tue",v:188},{d:"Wed",v:173},{d:"Thu",v:221},{d:"Fri",v:246},{d:"Sat",v:126},{d:"Sun",v:98}]}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="d"/><YAxis/><Tooltip/><Line type="monotone" dataKey="v" stroke="#315b7d" strokeWidth={3}/></LineChart></ResponsiveContainer>
+        </article>
+        <article className="agentStatus"><h3>Agent services</h3>{[["Registrar Agent","99.8%"],["Finance Agent","99.5%"],["Knowledge Agent","98.9%"],["Forecast Agent","99.2%"]].map(([name, uptime]) => <div key={name}><span className="statusDot"/><strong>{name}</strong><small>{uptime}</small></div>)}<button type="button" onClick={() => onNavigate("console")}><Settings size={15}/> Open system console</button></article>
+      </div>
+    </section>
+  );
+}
+
 function App() {
+  const [page, setPage] = useState("landing");
   const [summary, setSummary] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [message, setMessage] = useState("Aling lab supplies ang paubos na?");
@@ -201,6 +352,7 @@ function App() {
   const [demoRole, setDemoRole] = useState("Student");
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
+  const prompts = promptsByRole[demoRole];
   const [inventoryForm, setInventoryForm] = useState({
     sku: "N-500",
     product: "Arduino Uno Kit",
@@ -477,8 +629,20 @@ function App() {
     );
   }
 
+  if (page === "landing") {
+    return (
+      <LandingPage
+        onDemo={(role) => {
+          setDemoRole(role);
+          setActiveView("home");
+          setPage("portal");
+        }}
+      />
+    );
+  }
+
   return (
-    <main>
+    <main className={`portal role-${demoRole.toLowerCase()}`}>
       <aside className="sidebar">
         <div className="brand">
           <div className="brandIcon">
@@ -493,11 +657,19 @@ function App() {
         <nav>
           <button
             type="button"
+            className={activeView === "home" ? "active" : ""}
+            onClick={() => setActiveView("home")}
+          >
+            <Home size={16} />
+            {demoRole === "Student" ? "My Dashboard" : demoRole === "Registrar" ? "Operations" : "Overview"}
+          </button>
+          <button
+            type="button"
             className={activeView === "console" ? "active" : ""}
             onClick={() => openView("console", "Generate a school report.")}
           >
             <Sparkles size={16} />
-            Agent Console
+            {demoRole === "Student" ? "Campus AI" : "Agent Console"}
           </button>
           <button
             type="button"
@@ -505,7 +677,7 @@ function App() {
             onClick={() => openView("sql", "Show project scores greater than 85.")}
           >
             <Database size={16} />
-            School Records
+            {demoRole === "Student" ? "My Academics" : demoRole === "Registrar" ? "Student Records" : "Data Records"}
           </button>
           <button
             type="button"
@@ -513,7 +685,7 @@ function App() {
             onClick={() => openView("rag", "What does the capstone policy say about delayed students?")}
           >
             <FileSearch size={16} />
-            School Docs
+            {demoRole === "Student" ? "Campus Resources" : demoRole === "Registrar" ? "Knowledge Base" : "AI Knowledge"}
           </button>
           <button
             type="button"
@@ -521,19 +693,19 @@ function App() {
             onClick={() => openView("forecast", "Predict next month's enrollment activity.")}
           >
             <BarChart3 size={16} />
-            Forecasts
+            {demoRole === "Admin" ? "AI Analytics" : demoRole === "Registrar" ? "Question Analytics" : "Calendar"}
           </button>
-          <button
+          {demoRole !== "Student" && <button
             type="button"
             className={activeView === "add" ? "active" : ""}
             onClick={() => setActiveView("add")}
           >
             <PlusCircle size={16} />
             Add School Data
-          </button>
+          </button>}
         </nav>
 
-        <div className="sourcePanel">
+        {demoRole !== "Student" && <div className="sourcePanel">
           <button className="sourceToggle" type="button" onClick={() => setShowDocuments((value) => !value)}>
             <Upload size={16} />
             <span>Indexed documents</span>
@@ -549,20 +721,22 @@ function App() {
               ))}
             </div>
           )}
-        </div>
+        </div>}
+        <button className="backToSite" type="button" onClick={() => setPage("landing")}><ArrowRight size={15} /> Back to project</button>
       </aside>
 
       <section className="workspace">
         <header>
           <div>
-            <p className="eyebrow">agentic AI + records + documents + forecasting</p>
-            <h2>Enterprise AI assistant for higher education</h2>
+            <p className="eyebrow">{roleMeta[demoRole].eyebrow}</p>
+            <h2>{roleMeta[demoRole].title}</h2>
+            <p className="headerSubtitle">{roleMeta[demoRole].subtitle}</p>
           </div>
           <div className="headerActions">
             <label className="roleSwitcher">
               <Users size={15} />
               <span>Demo role</span>
-              <select value={demoRole} onChange={(event) => setDemoRole(event.target.value)}>
+              <select value={demoRole} onChange={(event) => { setDemoRole(event.target.value); setActiveView("home"); }}>
                 <option>Student</option>
                 <option>Registrar</option>
                 <option>Admin</option>
@@ -591,7 +765,11 @@ function App() {
           </div>
         </header>
 
-        <section className="metricsGrid">
+        {activeView === "home" && (
+          <RoleOverview role={demoRole} summary={summary} onAsk={(question) => { setActiveView("console"); setChatOpen(true); askAgent(question); }} onNavigate={setActiveView} />
+        )}
+
+        {activeView !== "home" && <section className="metricsGrid">
           <Metric
             icon={Database}
             label="Tracked students"
@@ -620,9 +798,9 @@ function App() {
             accent="blue"
             onClick={() => openView("rag", "Which students are at risk?")}
           />
-        </section>
+        </section>}
 
-        <section className="portfolioStrip" aria-label="Project role alignment">
+        {activeView !== "home" && <section className="portfolioStrip" aria-label="Project role alignment">
           <div className="portfolioIntro">
             <p className="eyebrow">Agentic AI + RAG + knowledge management + analytics</p>
             <h3>CampusIQ routes each request to a specialized data tool.</h3>
@@ -645,7 +823,7 @@ function App() {
               </div>
             ))}
           </div>
-        </section>
+        </section>}
 
         {activeView === "add" && (
         <section className="dataStudio">
@@ -743,7 +921,7 @@ function App() {
         </section>
         )}
 
-        {activeView !== "add" && (
+        {activeView !== "add" && activeView !== "home" && (
         <section className="consoleGrid">
           <div className="answerPanel">
             {activeResult ? (
@@ -802,7 +980,7 @@ function App() {
                     </div>
                     {activeResult.sources.map((source) => (
                       <article key={source.title}>
-                        <strong>{source.title}</strong>
+                        <div className="sourceMeta"><strong>{source.title}</strong><span>{source.source_type} · Page {source.page || 1} · {Math.round((source.score || 0.84) * 100)}% match</span></div>
                         <p>{source.snippet}</p>
                       </article>
                     ))}

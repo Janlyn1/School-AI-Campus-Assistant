@@ -5,6 +5,43 @@ from sqlalchemy.orm import Session
 from ..models import Customer, Employee, InventoryItem, KnowledgeDocument, Sale
 
 
+SPECIALIZED_KNOWLEDGE = [
+    {
+        "title": "Enrollment and Registrar Guide",
+        "source_type": "PDF",
+        "content": "Page 4. Continuing students enroll through the student portal during their assigned schedule. Clear academic and finance holds first, confirm subjects with the adviser, submit registration, and download the assessment form. Transcript and grade concerns are handled by the Registrar Office from Monday to Friday, 8 AM to 5 PM.",
+    },
+    {
+        "title": "Scholarship and Student Finance Guide",
+        "source_type": "PDF",
+        "content": "Page 7. Merit scholarships require a general weighted average of 1.75 or better and no failing grade. Financial assistance applicants submit the application form, proof of income, and latest grades. Tuition balances and payment posting concerns are handled by the Finance Office.",
+    },
+    {
+        "title": "Guidance and Career Support",
+        "source_type": "DOCX",
+        "content": "Page 3. Students may request confidential counseling, academic coaching, or career guidance through the Guidance Office. Urgent safety concerns should be raised directly with campus staff. Career services include resume review, mock interviews, and internship referrals.",
+    },
+    {
+        "title": "Library Services Handbook",
+        "source_type": "PDF",
+        "content": "Page 12. The campus library is open Monday to Friday from 7:30 AM to 7 PM and Saturday from 8 AM to 5 PM. Students may borrow three books for seven days and access online journals using their campus account.",
+    },
+    {
+        "title": "Campus IT Help Guide",
+        "source_type": "DOCX",
+        "content": "Page 5. To reset a campus WiFi or email password, open the account recovery page, verify the student email, and create a new password. If recovery fails, bring a student ID to the IT Help Desk. Never share one-time codes or passwords.",
+    },
+]
+
+
+def ensure_specialized_knowledge(db: Session) -> None:
+    existing_titles = {row[0] for row in db.query(KnowledgeDocument.title).all()}
+    for item in SPECIALIZED_KNOWLEDGE:
+        if item["title"] not in existing_titles:
+            db.add(KnowledgeDocument(**item))
+    db.commit()
+
+
 def seed_database(db: Session) -> None:
     if db.query(Sale).first():
         return

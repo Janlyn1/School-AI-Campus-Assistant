@@ -34,6 +34,7 @@ def search_documents(db: Session, question: str, limit: int = 3) -> list[dict]:
                 "source_type": doc.source_type,
                 "score": round(float(score), 3),
                 "snippet": doc.content[:280],
+                "page": int(doc.content.split("Page ", 1)[1].split(".", 1)[0]) if doc.content.startswith("Page ") else 1,
             }
         )
     return results

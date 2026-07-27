@@ -32,7 +32,13 @@ This portfolio project is built to demonstrate AI agent, backend API, database, 
 
 ## Features
 
+- Recruiter landing page with live demo, GitHub, documentation, features, and architecture
+- Three distinct responsive experiences:
+  - Student portal with announcements, calendar, program details, and quick campus services
+  - Registrar workspace with question queue, knowledge health, tickets, and document tools
+  - Admin control center with AI request analytics, service status, latency, and feedback metrics
 - AI chat interface for school questions
+- Specialized Registrar, Finance, Guidance, Library, and IT agent routing
 - School record tools for student activity, lab supplies, performance, and student risk
 - School document search over policies and notes
 - Forecasting endpoint using `scikit-learn` when available
@@ -82,7 +88,7 @@ The public demo uses deterministic intent routing so it remains reliable without
 
 ## Honest Demo Scope
 
-The Student, Registrar, and Admin selector demonstrates role context in the explainability and escalation workflow; it is not production authentication. Production deployment would add JWT or an identity provider, PostgreSQL/pgvector, document page extraction, and permission enforcement.
+The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, PostgreSQL/pgvector, document page extraction, and server-side permission enforcement. OpenAI/LangGraph integration is an intentional extension point rather than a fake dependency in the current no-key public demo.
 
 ## Run Locally
 
