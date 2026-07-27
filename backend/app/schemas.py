@@ -25,6 +25,7 @@ class ChatResponse(BaseModel):
     model_trace: dict[str, Any] | None = None
     llm_provider: str = "Tool-grounded fallback"
     llm_model: str = "No external LLM configured"
+    llm_status: str = "not_configured"
 
 
 class UploadResponse(BaseModel):

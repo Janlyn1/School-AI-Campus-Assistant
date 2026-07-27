@@ -1134,6 +1134,29 @@ function App() {
 
           {error && <div className="errorBanner">{error}</div>}
 
+          {lastQuestion && (
+            <div className="chatConversation" aria-live="polite">
+              <div className="messageRow userMessage">
+                <span>You</span>
+                <p>{lastQuestion}</p>
+              </div>
+              <div className="messageRow ariMessage">
+                <span>Ari</span>
+                {loading ? (
+                  <div className="typingDots" aria-label="Ari is thinking"><i /><i /><i /></div>
+                ) : (
+                  <>
+                    <p>{activeResult?.answer || "I could not complete that request. Please try again."}</p>
+                    <small>
+                      {activeResult?.llm_provider || "Campus tools"}
+                      {activeResult?.llm_status && activeResult.llm_status !== "active" ? ` · ${activeResult.llm_status.replaceAll("_", " ")}` : ""}
+                    </small>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {showPrompts ? (
             <div className="promptGrid">
               {prompts.map((prompt) => (

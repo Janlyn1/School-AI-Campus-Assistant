@@ -30,6 +30,7 @@ def generate_grounded_answer(
             "answer": result["answer"],
             "provider": "Tool-grounded fallback",
             "model": "No external LLM configured",
+            "status": "not_configured",
         }
 
     try:
@@ -61,10 +62,20 @@ def generate_grounded_answer(
         generated = (response.text or "").strip()
         if not generated:
             raise ValueError("Gemini returned an empty response.")
-        return {"answer": generated, "provider": "Google Gemini", "model": model}
-    except Exception:
+        return {"answer": generated, "provider": "Google Gemini", "model": model, "status": "active"}
+    except Exception as exc:
+        error_text = str(exc).lower()
+        if any(term in error_text for term in ["401", "403", "permission", "api key", "unauthenticated"]):
+            status = "authentication_failed"
+        elif any(term in error_text for term in ["429", "quota", "resource_exhausted"]):
+            status = "quota_exceeded"
+        elif any(term in error_text for term in ["404", "model", "not found"]):
+            status = "model_unavailable"
+        else:
+            status = "request_failed"
         return {
             "answer": result["answer"],
             "provider": "Tool-grounded fallback",
             "model": "Gemini unavailable",
+            "status": status,
         }

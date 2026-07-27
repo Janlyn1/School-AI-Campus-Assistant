@@ -133,6 +133,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     result["answer"] = generated["answer"]
     result["llm_provider"] = generated["provider"]
     result["llm_model"] = generated["model"]
+    result["llm_status"] = generated["status"]
     result["response_time_ms"] = round((time.perf_counter() - started) * 1000)
     result["model_trace"] = classify_inquiry(request.message)
     db.add(
