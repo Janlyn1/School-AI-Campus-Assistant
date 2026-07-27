@@ -1658,35 +1658,116 @@ textarea:focus {
   line-height: 1.5;
 }
 
-.explainGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 14px 0;
+.answerTrace {
+  border: 1px solid #d8d1c5;
+  border-radius: 8px;
+  margin: 16px 0;
+  overflow: hidden;
 }
 
-.explainGrid div {
-  background: #f7f2ea;
-  border: 1px solid #e5ddd1;
-  border-radius: 8px;
+.answerTrace summary {
+  align-items: center;
+  background: #fbfaf7;
+  color: #2e2c29;
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 800;
+  justify-content: space-between;
+  list-style: none;
+  padding: 12px 14px;
+}
+
+.answerTrace summary::-webkit-details-marker {
+  display: none;
+}
+
+.answerTrace summary span {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.answerTrace[open] .traceChevron {
+  transform: rotate(180deg);
+}
+
+.traceChevron {
+  color: #65615a;
+  transition: transform 160ms ease;
+}
+
+.traceTimeline {
+  border-top: 1px solid #e8e2d9;
   display: grid;
-  gap: 5px;
-  padding: 11px;
+  padding: 8px 14px 4px;
+}
+
+.traceStep {
+  display: grid;
+  gap: 11px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  min-height: 58px;
+  padding: 10px 0;
+  position: relative;
+}
+
+.traceStep:not(:last-child)::after {
+  background: #c7dcd5;
+  content: "";
+  height: calc(100% - 24px);
+  left: 8px;
+  position: absolute;
+  top: 35px;
+  width: 2px;
+}
+
+.traceStep > svg {
+  color: #117865;
+  margin-top: 1px;
+  position: relative;
+  z-index: 1;
+}
+
+.traceStep div {
+  display: grid;
+  gap: 3px;
   min-width: 0;
 }
 
-.explainGrid span {
+.traceStep span {
   color: #65615a;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.explainGrid strong {
+.traceStep strong {
   color: #2e2c29;
   font-size: 13px;
-  line-height: 1.35;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.traceWorkflow {
+  background: #f5f7f5;
+  border-top: 1px solid #e1e6e2;
+  padding: 13px 14px;
+}
+
+.traceWorkflow > strong {
+  color: #315148;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.traceWorkflow ol {
+  color: #4a4742;
+  display: grid;
+  font-size: 13px;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-left: 20px;
 }
 
 .feedbackBar {
