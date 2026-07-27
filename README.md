@@ -84,7 +84,7 @@ SQLAlchemy database layer
         |
 SQLite local fallback or PostgreSQL via DATABASE_URL
         |
-School document search + scikit-learn forecast model
+PostgreSQL pgvector semantic search with an honest TF-IDF fallback + scikit-learn forecast model
 ```
 
 ## Multi-Agent Routing
@@ -126,7 +126,7 @@ RAG answers show qualitative retrieval relevance alongside document type, filena
 
 ## Honest Demo Scope
 
-The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, pgvector embeddings, and server-side permission enforcement. LangGraph is used for the deployed chat workflow. Document retrieval currently uses TF-IDF cosine similarity, not vector embeddings.
+The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, and server-side permission enforcement. LangGraph is used for the deployed chat workflow. With PostgreSQL and its `vector` extension, documents are chunked and embedded with Gemini Embedding 2 at 768 dimensions, then retrieved through pgvector cosine similarity. SQLite or embedding API failures use a clearly labeled TF-IDF fallback.
 
 The demo uses synthetic campus records only. SQL operations go through predefined SQLAlchemy tools, and student-facing navigation does not expose raw administrative data. Uploads are limited to 5 MB and validated to TXT, PDF, DOCX, or PPTX before text extraction.
 
@@ -183,6 +183,7 @@ FRONTEND_ORIGINS=https://school-ai-campus-assistant.vercel.app
 DATABASE_URL=postgresql://user:password@host:5432/database
 GEMINI_API_KEY=your-secret-key
 GEMINI_MODEL=gemini-2.5-flash
+GEMINI_EMBEDDING_MODEL=gemini-embedding-2
 ```
 
 Store `GEMINI_API_KEY` only in Render's Environment settings. Never prefix it with `VITE_`, place it in the frontend, or commit it to GitHub. If Gemini is unavailable, Ari returns the verified SQL/RAG/tool answer and labels the provider as `Tool-grounded fallback`.

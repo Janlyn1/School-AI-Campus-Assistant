@@ -31,6 +31,7 @@ class ChatResponse(BaseModel):
 class UploadResponse(BaseModel):
     filename: str
     stored_characters: int
+    indexed_chunks: int = 0
     message: str
 
 

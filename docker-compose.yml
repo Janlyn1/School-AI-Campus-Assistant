@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_DB: ari_campus_ai
       POSTGRES_USER: ari
@@ -20,6 +20,7 @@ services:
       FRONTEND_ORIGINS: http://localhost:5173
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-2}
     depends_on:
       postgres:
         condition: service_healthy

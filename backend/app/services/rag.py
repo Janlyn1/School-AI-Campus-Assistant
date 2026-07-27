@@ -1,9 +1,14 @@
 from sqlalchemy.orm import Session
 
 from ..models import KnowledgeDocument
+from .vector_store import vector_search
 
 
 def search_documents(db: Session, question: str, limit: int = 3) -> list[dict]:
+    vector_results = vector_search(db, question, limit)
+    if vector_results:
+        return vector_results
+
     documents = db.query(KnowledgeDocument).all()
     if not documents:
         return []
@@ -35,6 +40,7 @@ def search_documents(db: Session, question: str, limit: int = 3) -> list[dict]:
                 "score": round(float(score), 3),
                 "snippet": doc.content[:280],
                 "page": int(doc.content.split("Page ", 1)[1].split(".", 1)[0]) if doc.content.startswith("Page ") else 1,
+                "retrieval_method": "TF-IDF cosine similarity",
             }
         )
     return results

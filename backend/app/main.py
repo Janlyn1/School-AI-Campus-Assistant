@@ -28,6 +28,7 @@ from .services.forecast import forecast_next_month
 from .services.gemini import generate_grounded_answer
 from .services.intent_classifier import classifier_evaluation, classify_inquiry
 from .services.seed import ensure_specialized_knowledge, seed_database
+from .services.vector_store import index_document, index_missing_documents, initialize_vector_store, vector_store_status
 from .services.workflow import run_agent_workflow
 
 
@@ -66,6 +67,7 @@ def startup() -> None:
     try:
         seed_database(db)
         ensure_specialized_knowledge(db)
+        initialize_vector_store(db)
     finally:
         db.close()
 
@@ -90,6 +92,7 @@ def health() -> dict:
         "gemini_model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
         "database": database_backend(),
         "orchestration": "LangGraph",
+        "retrieval": vector_store_status(),
     }
 
 
@@ -129,6 +132,10 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
         agent_name, data_path = "Report Agent", "Records + RAG + forecast tools"
     else:
         agent_name, data_path = "Campus Router", "Intent router + campus tools"
+    if result.get("sources"):
+        retrieval_method = result["sources"][0].get("retrieval_method")
+        if retrieval_method:
+            data_path = retrieval_method
     result["agent_name"] = agent_name
     result["data_path"] = data_path
     generated = generate_grounded_answer(request.message, request.role, result)
@@ -427,6 +434,17 @@ def list_documents(db: Session = Depends(get_db)) -> list[dict]:
     return [{"id": doc.id, "title": doc.title, "source_type": doc.source_type, "characters": len(doc.content)} for doc in docs]
 
 
+@app.post("/documents/reindex")
+def reindex_documents(db: Session = Depends(get_db)) -> dict:
+    indexed_chunks = index_missing_documents(db)
+    status = vector_store_status()
+    return {
+        "status": "completed" if status["schema_ready"] else "fallback_active",
+        "indexed_chunks": indexed_chunks,
+        "retrieval": status,
+    }
+
+
 @app.post("/documents/text", response_model=DataCreateResponse)
 def create_text_document(request: DocumentCreate, db: Session = Depends(get_db)) -> dict:
     content = request.content
@@ -437,6 +455,7 @@ def create_text_document(request: DocumentCreate, db: Session = Depends(get_db))
     db.add(doc)
     db.commit()
     db.refresh(doc)
+    indexed_chunks = index_document(db, doc)
     return {
         "kind": "rag_document",
         "message": f"{doc.title} was added to the school document knowledge base.",
@@ -447,6 +466,7 @@ def create_text_document(request: DocumentCreate, db: Session = Depends(get_db))
             "content": doc.content,
             "characters": len(doc.content),
             "note": request.note,
+            "indexed_chunks": indexed_chunks,
         },
     }
 
@@ -461,6 +481,7 @@ def create_ai_note(request: DocumentCreate, db: Session = Depends(get_db)) -> di
     db.add(doc)
     db.commit()
     db.refresh(doc)
+    indexed_chunks = index_document(db, doc)
     return {
         "kind": "ai_note",
         "message": f"AI note '{doc.title}' was saved and can be retrieved by RAG.",
@@ -471,6 +492,7 @@ def create_ai_note(request: DocumentCreate, db: Session = Depends(get_db)) -> di
             "content": doc.content,
             "characters": len(doc.content),
             "note": request.note,
+            "indexed_chunks": indexed_chunks,
         },
     }
 
@@ -515,8 +537,11 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     doc = KnowledgeDocument(title=file.filename, source_type=suffix[1:].upper(), content=content)
     db.add(doc)
     db.commit()
+    db.refresh(doc)
+    indexed_chunks = index_document(db, doc)
     return {
         "filename": file.filename,
         "stored_characters": len(content),
+        "indexed_chunks": indexed_chunks,
         "message": "Document stored and available for RAG search.",
     }
