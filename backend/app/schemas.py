@@ -22,6 +22,7 @@ class ChatResponse(BaseModel):
     agent_name: str = "CampusIQ Agent"
     data_path: str = "Campus database"
     response_time_ms: int = 0
+    model_trace: dict[str, Any] | None = None
 
 
 class UploadResponse(BaseModel):

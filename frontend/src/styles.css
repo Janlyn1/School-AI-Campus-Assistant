@@ -229,7 +229,7 @@ a {
 .featureGrid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .featureGrid article {
@@ -838,6 +838,85 @@ main {
   gap: 7px;
   justify-content: center;
   padding: 10px;
+}
+
+.mlPanel {
+  background: #ffffff;
+  border: 1px solid #d9e1e2;
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.mlMetricGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mlMetricGrid div {
+  background: #f4f7f9;
+  border: 1px solid #dce4e9;
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+}
+
+.mlMetricGrid span {
+  color: #65716c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.mlMetricGrid strong {
+  color: #315b7d;
+  font-size: 22px;
+}
+
+.confusionWrap {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.confusionMatrix {
+  display: grid;
+  gap: 4px;
+  min-width: 360px;
+  width: max-content;
+}
+
+.matrixLabel,
+.matrixCell {
+  align-items: center;
+  display: flex;
+  font-size: 10px;
+  justify-content: center;
+  min-height: 30px;
+}
+
+.matrixLabel {
+  color: #5c6863;
+  font-weight: 800;
+  justify-content: flex-start;
+}
+
+.matrixLabel.top {
+  justify-content: center;
+}
+
+.matrixCell {
+  background: #edf1f3;
+  border-radius: 4px;
+  color: #46534e;
+  font-weight: 800;
+}
+
+.matrixCell.correct {
+  background: #dbece5;
+  color: #126b59;
 }
 
 .sidebar {
@@ -1491,7 +1570,7 @@ textarea:focus {
 
 .explainGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin: 14px 0;
 }
@@ -1921,6 +2000,10 @@ th {
     align-items: flex-start;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .mlMetricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .requestTable article {

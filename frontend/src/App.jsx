@@ -83,11 +83,13 @@ const techBadges = ["React", "FastAPI", "SQLAlchemy", "RAG retrieval", "scikit-l
 
 const landingFeatures = [
   [MessageCircle, "AI Assistant", "Natural-language help in English, Filipino, and Taglish."],
-  [FileSearch, "RAG Document Search", "Retrieved policy evidence with source and confidence."],
+  [FileSearch, "RAG Document Search", "Retrieved policy evidence with page-level citations."],
   [Database, "SQL Database", "Structured campus records and visible query evidence."],
   [BrainCircuit, "Multi-Agent", "Specialized Registrar, Finance, Guidance, Library, and IT agents."],
   [BarChart3, "Analytics Dashboard", "Operational metrics, forecasts, latency, and feedback."],
   [LockKeyhole, "Role-Based Experience", "Distinct student, registrar, and admin workspaces."],
+  [Sparkles, "ML Inquiry Classifier", "Evaluated scikit-learn routing across seven campus service classes."],
+  [MessageSquareWarning, "Human Escalation", "Feedback, tickets, staff review, approvals, and equipment returns."],
 ];
 
 const roleMeta = {
@@ -135,7 +137,7 @@ function LandingPage({ onDemo }) {
               <p>Question routed successfully</p>
               <h3>Registrar Agent</h3>
               <div className="previewAnswer">Students with academic risk above 50% should receive an adviser review within seven days.</div>
-              <div className="previewEvidence"><span>Source</span><strong>Student Support Playbook</strong><span>Confidence</span><strong>94%</strong></div>
+              <div className="previewEvidence"><span>Source</span><strong>Student Support Playbook</strong><span>Retrieval</span><strong>High relevance</strong></div>
             </div>
           </div>
         </div>
@@ -165,6 +167,7 @@ const formatMoney = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
 
 const formatChartValue = (value, chart) => (chart?.format === "money" ? formatMoney(value) : String(value ?? 0));
+const relevanceLabel = (score) => (score >= 0.45 ? "High relevance" : score >= 0.2 ? "Moderate relevance" : "Supporting source");
 
 function Metric({ icon: Icon, label, value, accent, onClick }) {
   const handleKeyDown = (event) => {
@@ -305,7 +308,7 @@ function RequestCenter({ role, requests, onAction }) {
   );
 }
 
-function RoleOverview({ role, summary, requests, onAsk, onNavigate, onAction }) {
+function RoleOverview({ role, summary, documents, adminMetrics, mlEvaluation, requests, onAsk, onNavigate, onAction }) {
   if (role === "Student") {
     return (
       <section className="roleOverview studentOverview">
@@ -331,15 +334,15 @@ function RoleOverview({ role, summary, requests, onAsk, onNavigate, onAction }) 
       <section className="roleOverview registrarOverview">
         <div className="opsMetrics">
           <article><span>Open tickets</span><strong>6</strong><small>2 high priority</small></article>
-          <article><span>Pending questions</span><strong>14</strong><small>4 low confidence</small></article>
-          <article><span>Knowledge documents</span><strong>{summary?.document_count ?? 3}</strong><small>Indexed and searchable</small></article>
-          <article><span>Average confidence</span><strong>91%</strong><small>Last 30 days</small></article>
+          <article><span>Pending enrollment</span><strong>{requests.filter((item) => item.status === "pending_registrar").length}</strong><small>Awaiting confirmation</small></article>
+          <article><span>Knowledge documents</span><strong>{documents.length}</strong><small>Indexed and searchable</small></article>
+          <article><span>ML routing</span><strong>Evaluated</strong><small>See model metrics in Admin</small></article>
         </div>
         <div className="operationsGrid">
           <article className="queuePanel"><div className="panelTitle"><div><h3>Enrollment request queue</h3><p>AI-submitted requests that need confirmation</p></div><button type="button" onClick={() => onNavigate("requests")}>View all</button></div>
             {requests.length ? requests.slice(0, 3).map((request) => <div className="queueRow" key={request.id}><span><strong>{request.student_name}</strong><small>Request #{request.id} · {request.status.replaceAll("_", " ")}</small></span>{request.status === "pending_registrar" && <button type="button" onClick={() => onAction(request.id, "approve")}>Confirm</button>}</div>) : <div className="miniEmpty">No pending enrollment requests.</div>}
           </article>
-          <article className="knowledgeHealth"><h3>Knowledge health</h3><p>Coverage across registrar content</p><div className="healthScore"><strong>88</strong><span>/100</span></div><div className="progressTrack"><span style={{ width: "88%" }} /></div><ul><li><CheckCircle2 size={15} /> Student handbook indexed</li><li><CheckCircle2 size={15} /> Policies searchable</li><li><CircleHelp size={15} /> 4 FAQs need answers</li></ul><button type="button" onClick={() => onNavigate("add")}>Add school document</button></article>
+          <article className="knowledgeHealth"><h3>Knowledge coverage</h3><p>Current indexed sources</p><div className="healthScore"><strong>{documents.length}</strong><span> documents</span></div><ul><li><CheckCircle2 size={15} /> Page-level citations enabled</li><li><CheckCircle2 size={15} /> Policies searchable</li><li><CircleHelp size={15} /> Staff can add verified sources</li></ul><button type="button" onClick={() => onNavigate("add")}>Add school document</button></article>
         </div>
       </section>
     );
@@ -349,16 +352,33 @@ function RoleOverview({ role, summary, requests, onAsk, onNavigate, onAction }) 
     <section className="roleOverview adminOverview">
       <div className="opsMetrics adminMetrics">
         <article><span>Total users</span><strong>{summary?.total_students ?? 224}</strong><small>+8.2% this month</small></article>
-        <article><span>AI requests</span><strong>1,284</strong><small>96.4% success rate</small></article>
-        <article><span>Average latency</span><strong>842 ms</strong><small>Within target</small></article>
-        <article><span>Borrow requests</span><strong>{requests.length}</strong><small>{requests.filter((item) => item.status === "borrowed").length} currently borrowed</small></article>
+        <article><span>Logged AI requests</span><strong>{adminMetrics?.total_interactions ?? 0}</strong><small>Persisted interactions</small></article>
+        <article><span>Measured latency</span><strong>{adminMetrics?.average_latency_ms ?? 0} ms</strong><small>Average backend routing time</small></article>
+        <article><span>Feedback records</span><strong>{adminMetrics?.feedback_count ?? 0}</strong><small>{adminMetrics?.open_tickets ?? 0} escalated tickets</small></article>
       </div>
       <div className="adminGrid">
-        <article className="systemChart"><div className="panelTitle"><div><h3>AI request volume</h3><p>Requests across campus departments</p></div><span className="onlineTag">All systems operational</span></div>
-          <ResponsiveContainer width="100%" height={220}><LineChart data={[{d:"Mon",v:142},{d:"Tue",v:188},{d:"Wed",v:173},{d:"Thu",v:221},{d:"Fri",v:246},{d:"Sat",v:126},{d:"Sun",v:98}]}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="d"/><YAxis/><Tooltip/><Line type="monotone" dataKey="v" stroke="#315b7d" strokeWidth={3}/></LineChart></ResponsiveContainer>
+        <article className="systemChart"><div className="panelTitle"><div><h3>Recent response latency</h3><p>Measured backend time for logged interactions</p></div><span className="onlineTag">{adminMetrics?.source_grounded_answers ?? 0} source-grounded</span></div>
+          <ResponsiveContainer width="100%" height={220}><LineChart data={(adminMetrics?.recent || []).slice().reverse().map((item, index) => ({d: `Q${index + 1}`,v:item.latency_ms}))}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="d"/><YAxis/><Tooltip/><Line type="monotone" dataKey="v" stroke="#315b7d" strokeWidth={3}/></LineChart></ResponsiveContainer>
         </article>
-        <article className="agentStatus"><h3>Agent services</h3>{[["Registrar Agent","99.8%"],["Finance Agent","99.5%"],["Knowledge Agent","98.9%"],["Forecast Agent","99.2%"]].map(([name, uptime]) => <div key={name}><span className="statusDot"/><strong>{name}</strong><small>{uptime}</small></div>)}<button type="button" onClick={() => onNavigate("console")}><Settings size={15}/> Open system console</button></article>
+        <article className="agentStatus"><h3>Actual agent usage</h3>{(adminMetrics?.agent_usage || []).slice(0, 5).map((item) => <div key={item.agent}><span className="statusDot"/><strong>{item.agent}</strong><small>{item.requests} requests</small></div>)}{!adminMetrics?.agent_usage?.length && <p className="mutedText">No interactions logged yet.</p>}<button type="button" onClick={() => onNavigate("console")}><Settings size={15}/> Open system console</button></article>
       </div>
+      {mlEvaluation && <article className="mlPanel">
+        <div className="panelTitle"><div><p className="eyebrow">Measured ML evaluation</p><h3>Student inquiry classifier</h3><p>{mlEvaluation.model} · {mlEvaluation.split}</p></div><span className="onlineTag">{mlEvaluation.test_size} held-out examples</span></div>
+        <div className="mlMetricGrid">
+          {[["Accuracy", mlEvaluation.accuracy], ["Macro precision", mlEvaluation.macro_precision], ["Macro recall", mlEvaluation.macro_recall], ["Macro F1", mlEvaluation.macro_f1]].map(([label, value]) => <div key={label}><span>{label}</span><strong>{(value * 100).toFixed(1)}%</strong></div>)}
+        </div>
+        <div className="confusionWrap">
+          <strong>Confusion matrix</strong>
+          <div className="confusionMatrix" style={{ gridTemplateColumns: `90px repeat(${mlEvaluation.labels.length}, 34px)` }}>
+            <span />
+            {mlEvaluation.labels.map((label) => <span className="matrixLabel top" key={`top-${label}`} title={label}>{label.slice(0, 3)}</span>)}
+            {mlEvaluation.confusion_matrix.flatMap((row, rowIndex) => [
+              <span className="matrixLabel" key={`label-${mlEvaluation.labels[rowIndex]}`}>{mlEvaluation.labels[rowIndex].slice(0, 10)}</span>,
+              ...row.map((value, columnIndex) => <span className={rowIndex === columnIndex ? "matrixCell correct" : "matrixCell"} key={`${rowIndex}-${columnIndex}`}>{value}</span>),
+            ])}
+          </div>
+        </div>
+      </article>}
     </section>
   );
 }
@@ -385,6 +405,8 @@ function App() {
   const [lastQuestion, setLastQuestion] = useState("");
   const [requests, setRequests] = useState([]);
   const [requestStatus, setRequestStatus] = useState("");
+  const [adminMetrics, setAdminMetrics] = useState(null);
+  const [mlEvaluation, setMlEvaluation] = useState(null);
   const prompts = promptsByRole[demoRole];
   const [inventoryForm, setInventoryForm] = useState({
     sku: "N-500",
@@ -432,6 +454,16 @@ function App() {
       .then((response) => response.json())
       .then(setDocuments)
       .catch(() => setDocuments([]));
+
+    apiFetch("/admin/metrics")
+      .then((response) => response.json())
+      .then(setAdminMetrics)
+      .catch(() => setAdminMetrics(null));
+
+    apiFetch("/ml/evaluation")
+      .then((response) => response.json())
+      .then(setMlEvaluation)
+      .catch(() => setMlEvaluation(null));
   }
 
   async function refreshRequests(role = demoRole) {
@@ -836,7 +868,7 @@ function App() {
         </header>
 
         {activeView === "home" && (
-          <RoleOverview role={demoRole} summary={summary} requests={requests} onAsk={(question) => { setActiveView("console"); setChatOpen(true); askAgent(question); }} onNavigate={setActiveView} onAction={handleRequestAction} />
+          <RoleOverview role={demoRole} summary={summary} documents={documents} adminMetrics={adminMetrics} mlEvaluation={mlEvaluation} requests={requests} onAsk={(question) => { setActiveView("console"); setChatOpen(true); askAgent(question); }} onNavigate={setActiveView} onAction={handleRequestAction} />
         )}
 
         {activeView === "requests" && <RequestCenter role={demoRole} requests={requests} onAction={handleRequestAction} />}
@@ -1003,7 +1035,7 @@ function App() {
                   <span>{activeResult.intent}</span>
                   <div className="confidence">
                     <ShieldCheck size={15} />
-                    {Math.round((activeResult.confidence || 0.86) * 100)}% confidence
+                    {activeResult.model_trace?.label || "Tool"} inquiry
                   </div>
                 </div>
                 <p className="answer">{activeResult.answer}</p>
@@ -1012,6 +1044,7 @@ function App() {
                   <div><span>Agent</span><strong>{activeResult.agent_name || "Campus Router"}</strong></div>
                   <div><span>Data path</span><strong>{activeResult.data_path || "Campus tools"}</strong></div>
                   <div><span>Role context</span><strong>{demoRole}</strong></div>
+                  <div><span>ML classifier</span><strong>{activeResult.model_trace?.label || "Routing fallback"}</strong></div>
                   <div><span>Response time</span><strong>{activeResult.response_time_ms ?? 0} ms</strong></div>
                 </div>
 
@@ -1053,7 +1086,7 @@ function App() {
                     </div>
                     {activeResult.sources.map((source) => (
                       <article key={source.title}>
-                        <div className="sourceMeta"><strong>{source.title}</strong><span>{source.source_type} · Page {source.page || 1} · {Math.round((source.score || 0.84) * 100)}% match</span></div>
+                        <div className="sourceMeta"><strong>{source.title}</strong><span>{source.source_type} · Page {source.page || 1} · {relevanceLabel(source.score || 0)}</span></div>
                         <p>{source.snippet}</p>
                       </article>
                     ))}

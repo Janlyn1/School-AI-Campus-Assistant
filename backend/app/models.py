@@ -89,3 +89,17 @@ class CampusRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     returned_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AgentInteraction(Base):
+    __tablename__ = "agent_interactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    question: Mapped[str] = mapped_column(Text)
+    role: Mapped[str] = mapped_column(String(30), index=True)
+    intent: Mapped[str] = mapped_column(String(80), index=True)
+    agent_name: Mapped[str] = mapped_column(String(120), index=True)
+    latency_ms: Mapped[int] = mapped_column(Integer)
+    sources_used: Mapped[int] = mapped_column(Integer, default=0)
+    successful: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, index=True)

@@ -1,5 +1,7 @@
 import os
 import time
+from io import BytesIO
+from pathlib import Path
 from datetime import date
 from datetime import datetime, timezone
 
@@ -8,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .database import Base, engine, get_db
-from .models import AgentFeedback, CampusRequest, InventoryItem, KnowledgeDocument, Sale
+from .models import AgentFeedback, AgentInteraction, CampusRequest, InventoryItem, KnowledgeDocument, Sale
 from .schemas import (
     ChatRequest,
     ChatResponse,
@@ -24,6 +26,7 @@ from .schemas import (
 from .services.agent import answer_question
 from .services.analytics import dashboard_summary
 from .services.forecast import forecast_next_month
+from .services.intent_classifier import classifier_evaluation, classify_inquiry
 from .services.seed import ensure_specialized_knowledge, seed_database
 
 
@@ -122,7 +125,59 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     result["agent_name"] = agent_name
     result["data_path"] = data_path
     result["response_time_ms"] = round((time.perf_counter() - started) * 1000)
+    result["model_trace"] = classify_inquiry(request.message)
+    db.add(
+        AgentInteraction(
+            question=request.message,
+            role=request.role,
+            intent=intent,
+            agent_name=agent_name,
+            latency_ms=result["response_time_ms"],
+            sources_used=len(result.get("sources", [])),
+            successful=True,
+            created_at=datetime.now(timezone.utc),
+        )
+    )
+    db.commit()
     return result
+
+
+@app.get("/ml/evaluation")
+def get_ml_evaluation() -> dict:
+    return classifier_evaluation()
+
+
+@app.get("/admin/metrics")
+def get_admin_metrics(db: Session = Depends(get_db)) -> dict:
+    interactions = db.query(AgentInteraction).order_by(AgentInteraction.id.desc()).limit(500).all()
+    feedback_count = db.query(AgentFeedback).count()
+    open_tickets = db.query(AgentFeedback).filter(AgentFeedback.escalated.is_(True)).count()
+    documents = db.query(KnowledgeDocument).count()
+    total = len(interactions)
+    average_latency = round(sum(item.latency_ms for item in interactions) / total) if total else 0
+    source_grounded = sum(1 for item in interactions if item.sources_used > 0)
+    agent_usage: dict[str, int] = {}
+    for item in interactions:
+        agent_usage[item.agent_name] = agent_usage.get(item.agent_name, 0) + 1
+    return {
+        "total_interactions": total,
+        "average_latency_ms": average_latency,
+        "source_grounded_answers": source_grounded,
+        "feedback_count": feedback_count,
+        "open_tickets": open_tickets,
+        "indexed_documents": documents,
+        "agent_usage": [{"agent": name, "requests": count} for name, count in sorted(agent_usage.items(), key=lambda pair: pair[1], reverse=True)],
+        "recent": [
+            {
+                "question": item.question[:100],
+                "role": item.role,
+                "agent": item.agent_name,
+                "latency_ms": item.latency_ms,
+                "sources_used": item.sources_used,
+            }
+            for item in interactions[:8]
+        ],
+    }
 
 
 def request_payload(item: CampusRequest) -> dict:
@@ -411,8 +466,41 @@ def create_ai_note(request: DocumentCreate, db: Session = Depends(get_db)) -> di
 @app.post("/documents/upload", response_model=UploadResponse)
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
     raw = await file.read()
-    content = raw.decode("utf-8", errors="ignore")
-    doc = KnowledgeDocument(title=file.filename, source_type=file.filename.split(".")[-1].upper(), content=content)
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File is larger than the 5 MB demo limit.")
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix not in {".txt", ".pdf", ".docx", ".pptx"}:
+        raise HTTPException(status_code=415, detail="Supported files: TXT, PDF, DOCX, and PPTX.")
+
+    try:
+        if suffix == ".txt":
+            content = raw.decode("utf-8")
+        elif suffix == ".pdf":
+            from pypdf import PdfReader
+
+            reader = PdfReader(BytesIO(raw))
+            content = "\n\n".join(f"Page {index}. {page.extract_text() or ''}" for index, page in enumerate(reader.pages, start=1))
+        elif suffix == ".docx":
+            from docx import Document
+
+            document = Document(BytesIO(raw))
+            content = "Page 1. " + "\n".join(paragraph.text for paragraph in document.paragraphs if paragraph.text.strip())
+        else:
+            from pptx import Presentation
+
+            presentation = Presentation(BytesIO(raw))
+            slides = []
+            for index, slide in enumerate(presentation.slides, start=1):
+                text = " ".join(shape.text for shape in slide.shapes if hasattr(shape, "text") and shape.text.strip())
+                slides.append(f"Page {index}. {text}")
+            content = "\n\n".join(slides)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail="The document could not be read or contains no extractable text.") from exc
+
+    if not content.strip():
+        raise HTTPException(status_code=422, detail="The document contains no extractable text.")
+
+    doc = KnowledgeDocument(title=file.filename, source_type=suffix[1:].upper(), content=content)
     db.add(doc)
     db.commit()
     return {
