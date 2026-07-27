@@ -79,7 +79,7 @@ const roleSignals = [
   { label: "ML forecasting", value: "scikit-learn-ready forecast service" },
 ];
 
-const techBadges = ["React", "FastAPI", "SQLAlchemy", "RAG retrieval", "scikit-learn", "Tagalog/English"];
+const techBadges = ["React", "FastAPI", "Google Gemini", "SQLAlchemy", "RAG retrieval", "scikit-learn", "Tagalog/English"];
 
 const landingFeatures = [
   [MessageCircle, "AI Assistant", "Natural-language help in English, Filipino, and Taglish."],
@@ -1045,6 +1045,7 @@ function App() {
                   <div><span>Data path</span><strong>{activeResult.data_path || "Campus tools"}</strong></div>
                   <div><span>Role context</span><strong>{demoRole}</strong></div>
                   <div><span>ML classifier</span><strong>{activeResult.model_trace?.label || "Routing fallback"}</strong></div>
+                  <div><span>Language model</span><strong>{activeResult.llm_provider || "Tool-grounded fallback"} · {activeResult.llm_model || "No external LLM"}</strong></div>
                   <div><span>Response time</span><strong>{activeResult.response_time_ms ?? 0} ms</strong></div>
                 </div>
 

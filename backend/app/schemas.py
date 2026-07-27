@@ -23,6 +23,8 @@ class ChatResponse(BaseModel):
     data_path: str = "Campus database"
     response_time_ms: int = 0
     model_trace: dict[str, Any] | None = None
+    llm_provider: str = "Tool-grounded fallback"
+    llm_model: str = "No external LLM configured"
 
 
 class UploadResponse(BaseModel):

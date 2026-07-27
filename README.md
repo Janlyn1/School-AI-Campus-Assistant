@@ -42,6 +42,7 @@ This portfolio project is built to demonstrate AI agent, backend API, database, 
 - Genuine scikit-learn inquiry classifier integrated into every chat response
 - Persisted interaction logging and backend-derived Admin monitoring metrics
 - **Ari, Campus Services Assistant** for student enrollment and equipment borrowing
+- Google Gemini grounded generation on the backend, with deterministic tool fallback
 - Enrollment workflow: Student asks Ari → request enters Registrar queue → Registrar confirms enrollment
 - Borrowing workflow: Student asks Ari with SKU/product → inventory is checked → Admin approves release → Admin records return
 - Automatic distinction between insufficient stock and items the school does not stock
@@ -74,6 +75,8 @@ FastAPI backend
         |
 Campus router and specialized tool services
         |
+Gemini grounded response generation (when configured)
+        |
 SQLAlchemy database layer
         |
 SQLite demo database or PostgreSQL via DATABASE_URL
@@ -91,7 +94,7 @@ CampusIQ exposes a clear agent identity for every response:
 - **Report Agent** for combined records, retrieval, and forecast workflows
 - **Campus Router** for general capability guidance
 
-The public demo uses deterministic intent routing so it remains reliable without requiring a paid API key. The service boundaries are ready for an LLM or LangGraph router as a future production integration.
+Routing and tool execution remain deterministic for reliability. When `GEMINI_API_KEY` is configured, Google Gemini converts the verified tool result into a natural English, Filipino, or Taglish answer. Gemini cannot approve requests, modify inventory directly, or invent SQL/RAG evidence.
 
 ## Machine Learning Model
 
@@ -120,7 +123,7 @@ RAG answers show qualitative retrieval relevance alongside document type, filena
 
 ## Honest Demo Scope
 
-The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, PostgreSQL/pgvector, document page extraction, and server-side permission enforcement. OpenAI/LangGraph integration is an intentional extension point rather than a fake dependency in the current no-key public demo.
+The public portfolio provides realistic role-specific demo experiences; it does not claim production authentication. Production deployment would add JWT or an identity provider, email verification and password recovery, PostgreSQL/pgvector, and server-side permission enforcement. LangGraph remains an optional orchestration extension rather than a fake dependency.
 
 The demo uses synthetic campus records only. SQL operations go through predefined SQLAlchemy tools, and student-facing navigation does not expose raw administrative data. Uploads are limited to 5 MB and validated to TXT, PDF, DOCX, or PPTX before text extraction.
 
@@ -165,7 +168,11 @@ Environment variables:
 ```text
 FRONTEND_ORIGINS=https://school-ai-campus-assistant.vercel.app
 DATABASE_URL=sqlite:///./enterprise_ai_agent.db
+GEMINI_API_KEY=your-secret-key
+GEMINI_MODEL=gemini-2.5-flash
 ```
+
+Store `GEMINI_API_KEY` only in Render's Environment settings. Never prefix it with `VITE_`, place it in the frontend, or commit it to GitHub. If Gemini is unavailable, CampusIQ returns the verified SQL/RAG/tool answer and labels the provider as `Tool-grounded fallback`.
 
 The deployed backend URL should look like:
 

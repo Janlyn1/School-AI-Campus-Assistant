@@ -26,6 +26,7 @@ from .schemas import (
 from .services.agent import answer_question
 from .services.analytics import dashboard_summary
 from .services.forecast import forecast_next_month
+from .services.gemini import generate_grounded_answer
 from .services.intent_classifier import classifier_evaluation, classify_inquiry
 from .services.seed import ensure_specialized_knowledge, seed_database
 
@@ -83,7 +84,11 @@ def api_home() -> dict:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "gemini_configured": bool(os.getenv("GEMINI_API_KEY", "").strip()),
+        "gemini_model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    }
 
 
 @app.get("/dashboard/summary")
@@ -124,6 +129,10 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
         agent_name, data_path = "Campus Router", "Intent router + campus tools"
     result["agent_name"] = agent_name
     result["data_path"] = data_path
+    generated = generate_grounded_answer(request.message, request.role, result)
+    result["answer"] = generated["answer"]
+    result["llm_provider"] = generated["provider"]
+    result["llm_model"] = generated["model"]
     result["response_time_ms"] = round((time.perf_counter() - started) * 1000)
     result["model_trace"] = classify_inquiry(request.message)
     db.add(
