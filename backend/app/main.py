@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .database import Base, engine, get_db
-from .models import AgentFeedback, InventoryItem, KnowledgeDocument, Sale
+from .models import AgentFeedback, CampusRequest, InventoryItem, KnowledgeDocument, Sale
 from .schemas import (
     ChatRequest,
     ChatResponse,
@@ -17,6 +17,7 @@ from .schemas import (
     ForecastPointCreate,
     FeedbackCreate,
     InventoryCreate,
+    RequestAction,
     SaleCreate,
     UploadResponse,
 )
@@ -95,9 +96,11 @@ def get_sales_forecast(db: Session = Depends(get_db)) -> dict:
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     started = time.perf_counter()
-    result = answer_question(db, request.message)
+    result = answer_question(db, request.message, role=request.role, student_name=request.student_name)
     intent = result.get("intent", "")
     domain_agents = {
+        "enrollment_request_agent": ("Ari · Enrollment Assistant", "Student request → Registrar approval queue"),
+        "borrowing_request_agent": ("Ari · Equipment Assistant", "Inventory check → Admin approval queue"),
         "registrar_domain_agent": ("Registrar Agent", "Enrollment and registrar knowledge"),
         "finance_domain_agent": ("Finance Agent", "Scholarship and finance knowledge"),
         "guidance_domain_agent": ("Guidance Agent", "Student support knowledge"),
@@ -120,6 +123,80 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> dict:
     result["data_path"] = data_path
     result["response_time_ms"] = round((time.perf_counter() - started) * 1000)
     return result
+
+
+def request_payload(item: CampusRequest) -> dict:
+    return {
+        "id": item.id,
+        "request_type": item.request_type,
+        "student_name": item.student_name,
+        "sku": item.sku,
+        "product": item.product,
+        "quantity": item.quantity,
+        "details": item.details,
+        "status": item.status,
+        "reviewed_by": item.reviewed_by,
+        "created_at": item.created_at.isoformat(),
+        "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
+        "returned_at": item.returned_at.isoformat() if item.returned_at else None,
+    }
+
+
+@app.get("/requests")
+def list_requests(role: str = "Admin", student_name: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+    query = db.query(CampusRequest)
+    if role.lower() == "student" and student_name:
+        query = query.filter(CampusRequest.student_name == student_name)
+    elif role.lower() == "registrar":
+        query = query.filter(CampusRequest.request_type == "enrollment")
+    elif role.lower() == "admin":
+        query = query.filter(CampusRequest.request_type == "borrow")
+    return [request_payload(item) for item in query.order_by(CampusRequest.id.desc()).limit(50).all()]
+
+
+@app.post("/requests/{request_id}/approve", response_model=DataCreateResponse)
+def approve_request(request_id: int, request: RequestAction, db: Session = Depends(get_db)) -> dict:
+    item = db.query(CampusRequest).filter(CampusRequest.id == request_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Request not found.")
+    if item.status not in {"pending_registrar", "pending_admin"}:
+        raise HTTPException(status_code=409, detail="Request is no longer pending.")
+
+    if item.request_type == "borrow":
+        inventory = db.query(InventoryItem).filter(InventoryItem.sku == item.sku).first()
+        if not inventory:
+            raise HTTPException(status_code=409, detail="This item is no longer stocked by the school.")
+        if inventory.stock_remaining < item.quantity:
+            raise HTTPException(status_code=409, detail=f"Only {inventory.stock_remaining} item(s) remain in stock.")
+        inventory.stock_remaining -= item.quantity
+        item.status = "borrowed"
+    else:
+        item.status = "enrolled"
+
+    item.reviewed_by = request.reviewer
+    item.reviewed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(item)
+    return {"kind": item.request_type, "message": f"Request #{item.id} is now {item.status}.", "item": request_payload(item)}
+
+
+@app.post("/requests/{request_id}/return", response_model=DataCreateResponse)
+def return_borrowed_item(request_id: int, request: RequestAction, db: Session = Depends(get_db)) -> dict:
+    item = db.query(CampusRequest).filter(CampusRequest.id == request_id).first()
+    if not item or item.request_type != "borrow":
+        raise HTTPException(status_code=404, detail="Borrowing request not found.")
+    if item.status != "borrowed":
+        raise HTTPException(status_code=409, detail="Only borrowed items can be returned.")
+    inventory = db.query(InventoryItem).filter(InventoryItem.sku == item.sku).first()
+    if not inventory:
+        raise HTTPException(status_code=409, detail="Inventory record is missing.")
+    inventory.stock_remaining += item.quantity
+    item.status = "returned"
+    item.reviewed_by = request.reviewer
+    item.returned_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(item)
+    return {"kind": "return", "message": f"{item.product} was returned and stock was updated.", "item": request_payload(item)}
 
 
 @app.post("/feedback", response_model=DataCreateResponse)

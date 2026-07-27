@@ -39,6 +39,11 @@ This portfolio project is built to demonstrate AI agent, backend API, database, 
   - Admin control center with AI request analytics, service status, latency, and feedback metrics
 - AI chat interface for school questions
 - Specialized Registrar, Finance, Guidance, Library, and IT agent routing
+- **Ari, Campus Services Assistant** for student enrollment and equipment borrowing
+- Enrollment workflow: Student asks Ari → request enters Registrar queue → Registrar confirms enrollment
+- Borrowing workflow: Student asks Ari with SKU/product → inventory is checked → Admin approves release → Admin records return
+- Automatic distinction between insufficient stock and items the school does not stock
+- Student request tracking without exposing raw school records or administrative analytics
 - School record tools for student activity, lab supplies, performance, and student risk
 - School document search over policies and notes
 - Forecasting endpoint using `scikit-learn` when available
@@ -168,6 +173,9 @@ https://school-ai-campus-assistant.vercel.app
 
 ## Sample Questions
 
+- Enroll me for the upcoming term.
+- Borrow 2 pcs LAB-100 Arduino Uno Kit.
+- Borrow a quantum oscilloscope.
 - Aling lab supplies ang paubos na?
 - Add records lab supplies lma-302 rpi embedded system 9 stock 10 level engineering lab
 - Which courses have the most student activity?
@@ -176,6 +184,20 @@ https://school-ai-campus-assistant.vercel.app
 - Which students are at risk?
 - Predict next month's enrollment activity.
 - Generate a school report.
+
+## Campus Service Workflow
+
+```text
+Student asks Ari
+        |
+        +-- Enrollment request --> Registrar confirms --> Enrolled
+        |
+        +-- Borrow request --> Inventory check --> Admin confirms --> Borrowed
+                                                         |
+                                                         +--> Mark returned --> Stock restored
+```
+
+The public demo uses a fixed student identity (`Janlyn Rustila`) until production authentication is added. Request records, approval status, reviewer, timestamps, borrower, SKU, product, and quantity are persisted in the SQL database.
 
 ## PostgreSQL Setup
 

@@ -67,7 +67,7 @@ async function apiFetch(path, options = {}, retries = 2) {
 }
 
 const promptsByRole = {
-  Student: ["How do I enroll?", "What scholarships are available?", "What are the graduation requirements?", "What are the library hours?", "How can I reset my campus WiFi password?", "Explain the capstone policy."],
+  Student: ["Enroll me for the upcoming term.", "Borrow LAB-100 Arduino Uno Kit.", "What scholarships are available?", "What are the library hours?", "How can I reset my campus WiFi password?", "Explain the capstone policy."],
   Registrar: ["Show students with low performance.", "Which students are at risk?", "What policy sources are indexed?", "Show student activity records.", "Generate a school report.", "Which questions need registrar review?"],
   Admin: ["Generate a school report.", "Predict next month's enrollment activity.", "Aling lab supplies ang paubos na?", "Show project scores greater than 85.", "How many students are tracked?", "Show system AI performance."],
 };
@@ -274,7 +274,38 @@ function downloadReport(markdown) {
   URL.revokeObjectURL(url);
 }
 
-function RoleOverview({ role, summary, onAsk, onNavigate }) {
+function RequestCenter({ role, requests, onAction }) {
+  const title = role === "Student" ? "My service requests" : role === "Registrar" ? "Enrollment approvals" : "Equipment borrowing";
+  const description = role === "Student" ? "Track requests submitted through Ari." : role === "Registrar" ? "Confirm students who are ready to enroll." : "Approve releases and record returned school equipment.";
+  return (
+    <section className="requestCenter">
+      <div className="panelTitle"><div><p className="eyebrow">{role} workflow</p><h3>{title}</h3><p>{description}</p></div><span className="requestCount">{requests.length} requests</span></div>
+      {requests.length ? (
+        <div className="requestTable">
+          {requests.map((request) => (
+            <article key={request.id}>
+              <div className="requestIcon">{request.request_type === "enrollment" ? <GraduationCap size={19} /> : <Database size={19} />}</div>
+              <div className="requestMain">
+                <strong>{request.request_type === "enrollment" ? "Enrollment request" : request.product}</strong>
+                <span>{role === "Student" ? `Request #${request.id}` : request.student_name}{request.sku ? ` · ${request.sku} · Qty ${request.quantity}` : ""}</span>
+              </div>
+              <span className={`requestStatus ${request.status}`}>{request.status.replaceAll("_", " ")}</span>
+              <div className="requestActions">
+                {role === "Registrar" && request.status === "pending_registrar" && <button type="button" onClick={() => onAction(request.id, "approve")}><CheckCircle2 size={15} /> Confirm enrollment</button>}
+                {role === "Admin" && request.status === "pending_admin" && <button type="button" onClick={() => onAction(request.id, "approve")}><CheckCircle2 size={15} /> Approve borrow</button>}
+                {role === "Admin" && request.status === "borrowed" && <button type="button" className="returnButton" onClick={() => onAction(request.id, "return")}><ArrowRight size={15} /> Mark returned</button>}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="requestEmpty"><Clock3 size={28} /><strong>No requests yet</strong><p>{role === "Student" ? "Ask Ari to enroll or borrow a school item." : "New AI-submitted requests will appear here."}</p></div>
+      )}
+    </section>
+  );
+}
+
+function RoleOverview({ role, summary, requests, onAsk, onNavigate, onAction }) {
   if (role === "Student") {
     return (
       <section className="roleOverview studentOverview">
@@ -305,8 +336,8 @@ function RoleOverview({ role, summary, onAsk, onNavigate }) {
           <article><span>Average confidence</span><strong>91%</strong><small>Last 30 days</small></article>
         </div>
         <div className="operationsGrid">
-          <article className="queuePanel"><div className="panelTitle"><div><h3>Student question queue</h3><p>Requests that need human review</p></div><button type="button" onClick={() => onNavigate("rag")}>View knowledge</button></div>
-            {[["Transcript request follow-up", "Maria D.", "High"], ["Enrollment prerequisite question", "Kyle R.", "Medium"], ["Scholarship document verification", "Ana P.", "Medium"]].map(([title, user, priority]) => <button type="button" className="queueRow" key={title} onClick={() => onAsk(title)}><span><strong>{title}</strong><small>{user} · 8 min ago</small></span><em className={`priority ${priority.toLowerCase()}`}>{priority}</em><ArrowRight size={15} /></button>)}
+          <article className="queuePanel"><div className="panelTitle"><div><h3>Enrollment request queue</h3><p>AI-submitted requests that need confirmation</p></div><button type="button" onClick={() => onNavigate("requests")}>View all</button></div>
+            {requests.length ? requests.slice(0, 3).map((request) => <div className="queueRow" key={request.id}><span><strong>{request.student_name}</strong><small>Request #{request.id} · {request.status.replaceAll("_", " ")}</small></span>{request.status === "pending_registrar" && <button type="button" onClick={() => onAction(request.id, "approve")}>Confirm</button>}</div>) : <div className="miniEmpty">No pending enrollment requests.</div>}
           </article>
           <article className="knowledgeHealth"><h3>Knowledge health</h3><p>Coverage across registrar content</p><div className="healthScore"><strong>88</strong><span>/100</span></div><div className="progressTrack"><span style={{ width: "88%" }} /></div><ul><li><CheckCircle2 size={15} /> Student handbook indexed</li><li><CheckCircle2 size={15} /> Policies searchable</li><li><CircleHelp size={15} /> 4 FAQs need answers</li></ul><button type="button" onClick={() => onNavigate("add")}>Add school document</button></article>
         </div>
@@ -320,7 +351,7 @@ function RoleOverview({ role, summary, onAsk, onNavigate }) {
         <article><span>Total users</span><strong>{summary?.total_students ?? 224}</strong><small>+8.2% this month</small></article>
         <article><span>AI requests</span><strong>1,284</strong><small>96.4% success rate</small></article>
         <article><span>Average latency</span><strong>842 ms</strong><small>Within target</small></article>
-        <article><span>Open feedback</span><strong>9</strong><small>3 need review</small></article>
+        <article><span>Borrow requests</span><strong>{requests.length}</strong><small>{requests.filter((item) => item.status === "borrowed").length} currently borrowed</small></article>
       </div>
       <div className="adminGrid">
         <article className="systemChart"><div className="panelTitle"><div><h3>AI request volume</h3><p>Requests across campus departments</p></div><span className="onlineTag">All systems operational</span></div>
@@ -352,6 +383,8 @@ function App() {
   const [demoRole, setDemoRole] = useState("Student");
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
+  const [requests, setRequests] = useState([]);
+  const [requestStatus, setRequestStatus] = useState("");
   const prompts = promptsByRole[demoRole];
   const [inventoryForm, setInventoryForm] = useState({
     sku: "N-500",
@@ -401,9 +434,22 @@ function App() {
       .catch(() => setDocuments([]));
   }
 
+  async function refreshRequests(role = demoRole) {
+    const params = new URLSearchParams({ role });
+    if (role === "Student") params.set("student_name", "Janlyn Rustila");
+    apiFetch(`/requests?${params.toString()}`)
+      .then((response) => response.json())
+      .then(setRequests)
+      .catch(() => setRequests([]));
+  }
+
   useEffect(() => {
     refreshDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (page === "portal") refreshRequests(demoRole);
+  }, [demoRole, page]);
 
   async function askAgent(nextMessage = message) {
     if (!nextMessage.trim()) return;
@@ -424,7 +470,7 @@ function App() {
       const response = await apiFetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: nextMessage }),
+        body: JSON.stringify({ message: nextMessage, role: demoRole, student_name: "Janlyn Rustila" }),
       }, 3);
       const result = await response.json();
       setActiveResult(result);
@@ -436,10 +482,30 @@ function App() {
         });
         refreshDashboardData();
       }
+      if (["enrollment_request_agent", "borrowing_request_agent"].includes(result.intent)) {
+        refreshRequests(demoRole);
+      }
     } catch {
       setError("AI backend is still waking up. Wait 30 seconds, then click Send again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRequestAction(requestId, action) {
+    setRequestStatus("Updating request...");
+    try {
+      const response = await apiFetch(`/requests/${requestId}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewer: demoRole === "Admin" ? "Campus Admin" : "Registrar Staff" }),
+      });
+      const result = await response.json();
+      setRequestStatus(result.message);
+      refreshRequests(demoRole);
+      refreshDashboardData();
+    } catch (requestError) {
+      setRequestStatus(requestError.message || "Unable to update request.");
     }
   }
 
@@ -666,34 +732,46 @@ function App() {
           <button
             type="button"
             className={activeView === "console" ? "active" : ""}
-            onClick={() => openView("console", "Generate a school report.")}
+            onClick={() => {
+              setActiveView("console");
+              setChatOpen(true);
+              if (demoRole !== "Student") askAgent("Generate a school report.");
+            }}
           >
             <Sparkles size={16} />
             {demoRole === "Student" ? "Campus AI" : "Agent Console"}
           </button>
-          <button
+          {demoRole !== "Student" && <button
             type="button"
             className={activeView === "sql" ? "active" : ""}
             onClick={() => openView("sql", "Show project scores greater than 85.")}
           >
             <Database size={16} />
             {demoRole === "Student" ? "My Academics" : demoRole === "Registrar" ? "Student Records" : "Data Records"}
-          </button>
-          <button
+          </button>}
+          {demoRole !== "Student" && <button
             type="button"
             className={activeView === "rag" ? "active" : ""}
             onClick={() => openView("rag", "What does the capstone policy say about delayed students?")}
           >
             <FileSearch size={16} />
             {demoRole === "Student" ? "Campus Resources" : demoRole === "Registrar" ? "Knowledge Base" : "AI Knowledge"}
-          </button>
-          <button
+          </button>}
+          {demoRole !== "Student" && <button
             type="button"
             className={activeView === "forecast" ? "active" : ""}
             onClick={() => openView("forecast", "Predict next month's enrollment activity.")}
           >
             <BarChart3 size={16} />
             {demoRole === "Admin" ? "AI Analytics" : demoRole === "Registrar" ? "Question Analytics" : "Calendar"}
+          </button>}
+          <button
+            type="button"
+            className={activeView === "requests" ? "active" : ""}
+            onClick={() => setActiveView("requests")}
+          >
+            <Clock3 size={16} />
+            {demoRole === "Student" ? "My Requests" : demoRole === "Registrar" ? "Enrollment Requests" : "Borrowing Records"}
           </button>
           {demoRole !== "Student" && <button
             type="button"
@@ -742,34 +820,29 @@ function App() {
                 <option>Admin</option>
               </select>
             </label>
-          <div
+          <button
+            type="button"
             className="status"
-            role="button"
-            tabIndex={0}
-            onClick={() => openView("console", "Generate a school report.")}
-            onMouseDown={() => openView("console", "Generate a school report.")}
-            onPointerDown={(event) => {
-              event.preventDefault();
-              openView("console", "Generate a school report.");
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openView("console", "Generate a school report.");
-              }
+            onClick={() => {
+              setActiveView("console");
+              setChatOpen(true);
+              if (demoRole !== "Student") askAgent("Generate a school report.");
             }}
           >
             <Activity size={15} />
             Live demo
-          </div>
+          </button>
           </div>
         </header>
 
         {activeView === "home" && (
-          <RoleOverview role={demoRole} summary={summary} onAsk={(question) => { setActiveView("console"); setChatOpen(true); askAgent(question); }} onNavigate={setActiveView} />
+          <RoleOverview role={demoRole} summary={summary} requests={requests} onAsk={(question) => { setActiveView("console"); setChatOpen(true); askAgent(question); }} onNavigate={setActiveView} onAction={handleRequestAction} />
         )}
 
-        {activeView !== "home" && <section className="metricsGrid">
+        {activeView === "requests" && <RequestCenter role={demoRole} requests={requests} onAction={handleRequestAction} />}
+        {requestStatus && activeView === "requests" && <div className="requestNotice">{requestStatus}</div>}
+
+        {activeView !== "home" && activeView !== "requests" && demoRole !== "Student" && <section className="metricsGrid">
           <Metric
             icon={Database}
             label="Tracked students"
@@ -800,7 +873,7 @@ function App() {
           />
         </section>}
 
-        {activeView !== "home" && <section className="portfolioStrip" aria-label="Project role alignment">
+        {activeView !== "home" && activeView !== "requests" && demoRole !== "Student" && <section className="portfolioStrip" aria-label="Project role alignment">
           <div className="portfolioIntro">
             <p className="eyebrow">Agentic AI + RAG + knowledge management + analytics</p>
             <h3>CampusIQ routes each request to a specialized data tool.</h3>
@@ -921,7 +994,7 @@ function App() {
         </section>
         )}
 
-        {activeView !== "add" && activeView !== "home" && (
+        {activeView !== "add" && activeView !== "home" && activeView !== "requests" && (
         <section className="consoleGrid">
           <div className="answerPanel">
             {activeResult ? (
@@ -1017,7 +1090,7 @@ function App() {
         <div className="chatWindow">
           <div className="chatHeader">
             <div>
-              <strong>Ask the agent</strong>
+              <strong>Ari · Campus Services Assistant</strong>
               <span>{loading ? "Thinking..." : "Online"}</span>
             </div>
             <button type="button" onClick={() => setChatOpen(false)} title="Minimize chat">

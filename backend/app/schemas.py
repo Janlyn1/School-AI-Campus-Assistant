@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=2, examples=["Which products are almost out of stock?"])
+    role: str = "Student"
+    student_name: str = "Janlyn Rustila"
 
 
 class ChatResponse(BaseModel):
@@ -74,3 +76,7 @@ class FeedbackCreate(BaseModel):
     helpful: bool | None = None
     escalated: bool = False
     note: str | None = None
+
+
+class RequestAction(BaseModel):
+    reviewer: str

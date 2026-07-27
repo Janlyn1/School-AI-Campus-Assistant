@@ -72,3 +72,20 @@ class AgentFeedback(Base):
     escalated: Mapped[bool] = mapped_column(Boolean, default=False)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class CampusRequest(Base):
+    __tablename__ = "campus_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    request_type: Mapped[str] = mapped_column(String(30), index=True)
+    student_name: Mapped[str] = mapped_column(String(120), index=True)
+    sku: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    product: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    reviewed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    returned_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

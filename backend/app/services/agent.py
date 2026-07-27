@@ -1,9 +1,10 @@
 import re
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ..models import InventoryItem, KnowledgeDocument
+from ..models import CampusRequest, InventoryItem, KnowledgeDocument
 from .analytics import (
     churn_risk_customers,
     dashboard_summary,
@@ -222,8 +223,157 @@ def _specialized_domain_answer(db: Session, text: str, message: str) -> dict[str
     return None
 
 
-def answer_question(db: Session, message: str) -> dict[str, Any]:
+def _request_row(item: CampusRequest) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "request_type": item.request_type,
+        "student_name": item.student_name,
+        "sku": item.sku,
+        "product": item.product,
+        "quantity": item.quantity,
+        "status": item.status,
+        "details": item.details,
+    }
+
+
+def _create_student_service_request(db: Session, message: str, role: str, student_name: str) -> dict[str, Any] | None:
+    if role.lower() != "student":
+        return None
     text = message.lower()
+
+    enrollment_commands = [
+        "enroll me",
+        "i want to enroll",
+        "submit my enrollment",
+        "enrollment request",
+        "mag enroll ako",
+        "mag-enroll ako",
+        "ipa enroll",
+        "ipa-enroll",
+    ]
+    if _has_any(text, enrollment_commands):
+        existing = (
+            db.query(CampusRequest)
+            .filter(
+                CampusRequest.request_type == "enrollment",
+                CampusRequest.student_name == student_name,
+                CampusRequest.status == "pending_registrar",
+            )
+            .first()
+        )
+        if existing:
+            return {
+                "intent": "enrollment_request_agent",
+                "answer": f"Your enrollment request #{existing.id} is already waiting for Registrar confirmation.",
+                "rows": [_request_row(existing)],
+                "confidence": 0.98,
+                "workflow": ["Detected enrollment action", "Checked existing requests", "Found pending Registrar review", "Returned current request status"],
+            }
+        item = CampusRequest(
+            request_type="enrollment",
+            student_name=student_name,
+            quantity=1,
+            details=message,
+            status="pending_registrar",
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(item)
+        db.commit()
+        db.refresh(item)
+        return {
+            "intent": "enrollment_request_agent",
+            "answer": f"Enrollment request #{item.id} was submitted for {student_name}. The Registrar must confirm it before you are enrolled.",
+            "rows": [_request_row(item)],
+            "confidence": 0.98,
+            "workflow": ["Detected enrollment action", "Validated student context", "Created enrollment request", "Sent request to Registrar queue"],
+        }
+
+    borrow_terms = ["borrow", "hiram", "humiram", "pahiram"]
+    if not _has_any(text, borrow_terms):
+        return None
+
+    quantity_match = re.search(r"\b(\d+)\s*(?:pcs|pieces|units?|items?)\b", text)
+    quantity = max(int(quantity_match.group(1)), 1) if quantity_match else 1
+    sku_match = re.search(r"\b([a-z]{2,}[-_]?\d{2,})\b", message, flags=re.IGNORECASE)
+    inventory = None
+    if sku_match:
+        sku = sku_match.group(1).upper().replace("_", "-")
+        inventory = db.query(InventoryItem).filter(InventoryItem.sku == sku).first()
+    if not inventory:
+        items = db.query(InventoryItem).all()
+        inventory = next((item for item in items if item.product.lower() in text), None)
+        if not inventory:
+            message_words = set(re.findall(r"[a-z]{3,}", text))
+            ranked = []
+            for item in items:
+                product_words = set(re.findall(r"[a-z]{3,}", item.product.lower()))
+                overlap = len(message_words.intersection(product_words)) / max(len(product_words), 1)
+                ranked.append((overlap, item))
+            best_overlap, best_item = max(ranked, key=lambda pair: pair[0], default=(0, None))
+            inventory = best_item if best_overlap >= 0.5 else None
+    if not inventory:
+        return {
+            "intent": "borrowing_request_agent",
+            "answer": "That item is not currently stocked by the school. Please ask the laboratory or Admin Office if it can be added to inventory.",
+            "confidence": 0.95,
+            "workflow": ["Detected borrowing action", "Searched SKU and product inventory", "No matching stocked item found", "Returned unavailable-item guidance"],
+        }
+    if inventory.stock_remaining < quantity:
+        return {
+            "intent": "borrowing_request_agent",
+            "answer": f"{inventory.product} ({inventory.sku}) is out of stock for the requested quantity. Available now: {inventory.stock_remaining}.",
+            "rows": [{"sku": inventory.sku, "product": inventory.product, "available_stock": inventory.stock_remaining, "requested": quantity}],
+            "confidence": 0.99,
+            "workflow": ["Detected borrowing action", "Matched school inventory", "Checked available stock", "Stopped request because stock is insufficient"],
+        }
+
+    pending = (
+        db.query(CampusRequest)
+        .filter(
+            CampusRequest.request_type == "borrow",
+            CampusRequest.student_name == student_name,
+            CampusRequest.sku == inventory.sku,
+            CampusRequest.status == "pending_admin",
+        )
+        .first()
+    )
+    if pending:
+        return {
+            "intent": "borrowing_request_agent",
+            "answer": f"Borrow request #{pending.id} for {inventory.product} is already waiting for Admin confirmation.",
+            "rows": [_request_row(pending)],
+            "confidence": 0.98,
+            "workflow": ["Detected borrowing action", "Matched school inventory", "Checked pending requests", "Returned existing Admin review status"],
+        }
+
+    item = CampusRequest(
+        request_type="borrow",
+        student_name=student_name,
+        sku=inventory.sku,
+        product=inventory.product,
+        quantity=quantity,
+        details=message,
+        status="pending_admin",
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return {
+        "intent": "borrowing_request_agent",
+        "answer": f"Borrow request #{item.id} was submitted for {quantity} × {inventory.product} ({inventory.sku}). Admin must confirm it before release.",
+        "rows": [_request_row(item)],
+        "confidence": 0.98,
+        "workflow": ["Detected borrowing action", "Matched SKU/product in inventory", "Confirmed sufficient stock", "Created request in Admin queue"],
+    }
+
+
+def answer_question(db: Session, message: str, role: str = "Student", student_name: str = "Janlyn Rustila") -> dict[str, Any]:
+    text = message.lower()
+
+    service_request = _create_student_service_request(db, message, role, student_name)
+    if service_request:
+        return service_request
 
     inventory_write = _add_inventory_from_chat(db, message)
     if inventory_write:

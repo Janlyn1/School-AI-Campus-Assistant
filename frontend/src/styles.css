@@ -579,6 +579,154 @@ main {
   color: #74807b;
 }
 
+.queueRow > button {
+  background: #117865;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.miniEmpty {
+  border: 1px dashed #ced8d3;
+  border-radius: 8px;
+  color: #66716d;
+  font-size: 13px;
+  padding: 24px;
+  text-align: center;
+}
+
+.requestCenter {
+  background: white;
+  border: 1px solid #d9e1dd;
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.requestCenter .panelTitle h3 {
+  font-size: 23px;
+}
+
+.requestCount {
+  background: var(--role-soft);
+  border-radius: 999px;
+  color: var(--role-accent);
+  font-size: 12px;
+  font-weight: 900;
+  padding: 7px 10px;
+}
+
+.requestTable {
+  border: 1px solid #e0e6e3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.requestTable article {
+  align-items: center;
+  border-bottom: 1px solid #e6ebe8;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 42px minmax(180px, 1fr) auto auto;
+  padding: 14px;
+}
+
+.requestTable article:last-child {
+  border-bottom: 0;
+}
+
+.requestIcon {
+  background: var(--role-soft);
+  border-radius: 8px;
+  color: var(--role-accent);
+  display: grid;
+  height: 38px;
+  place-items: center;
+  width: 38px;
+}
+
+.requestMain {
+  display: grid;
+  gap: 4px;
+}
+
+.requestMain span {
+  color: #68736e;
+  font-size: 12px;
+}
+
+.requestStatus {
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 6px 8px;
+  text-transform: capitalize;
+}
+
+.requestStatus.pending_registrar,
+.requestStatus.pending_admin {
+  background: #fff2d9;
+  color: #825a0a;
+}
+
+.requestStatus.enrolled,
+.requestStatus.returned {
+  background: #e5f3ea;
+  color: #217344;
+}
+
+.requestStatus.borrowed {
+  background: #e6eef6;
+  color: #315b7d;
+}
+
+.requestActions button {
+  align-items: center;
+  background: var(--role-accent);
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 9px 11px;
+}
+
+.requestActions .returnButton {
+  background: #315b7d;
+}
+
+.requestEmpty {
+  align-items: center;
+  color: #68736e;
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  min-height: 260px;
+  text-align: center;
+}
+
+.requestEmpty p {
+  margin: 0;
+}
+
+.requestNotice {
+  background: #e5f3ea;
+  border: 1px solid #c9e0d1;
+  border-radius: 8px;
+  color: #216b42;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 11px 13px;
+}
+
 .priority {
   border-radius: 999px;
   font-size: 10px;
@@ -1767,6 +1915,23 @@ th {
 
   .queueRow {
     grid-template-columns: 1fr auto;
+  }
+
+  .requestCenter .panelTitle {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .requestTable article {
+    align-items: start;
+    grid-template-columns: 42px 1fr;
+  }
+
+  .requestStatus,
+  .requestActions {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .queueRow > svg {
